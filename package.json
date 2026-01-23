@@ -3,21 +3,21 @@
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TanStack/template.git"
+    "url": "git+https://github.com/TanStack/agents.git"
   },
   "packageManager": "pnpm@10.26.1",
   "type": "module",
   "scripts": {
     "build": "nx affected --skip-nx-cache --targets=build --exclude=examples/**",
     "build:all": "nx run-many --targets=build --exclude=examples/**",
-    "build:core": "nx run-many --targets=build --projects=packages/template",
+    "build:core": "nx run-many --targets=build --projects=packages/agents",
     "changeset": "changeset",
     "changeset:publish": "changeset publish",
     "changeset:version": "changeset version && pnpm install --no-frozen-lockfile && pnpm format",
-    "clean": "find template -name 'dist' -type d -prune -exec rm -rf {} +",
-    "clean:node_modules": "find template -name 'node_modules' -type d -prune -exec rm -rf {} +",
+    "clean": "find agents -name 'dist' -type d -prune -exec rm -rf {} +",
+    "clean:node_modules": "find agents -name 'node_modules' -type d -prune -exec rm -rf {} +",
     "clean:all": "pnpm run clean && pnpm run clean:node_modules",
-    "copy:readme": "cp README.md packages/template/README.md && cp README.md packages/template-devtools/README.md && cp README.md packages/react-template/README.md && cp README.md packages/react-template-devtools/README.md && cp README.md packages/solid-template/README.md && cp README.md packages/solid-template-devtools/README.md",
+    "copy:readme": "cp README.md packages/agents/README.md",
     "dev": "pnpm run watch",
     "format": "prettier --experimental-cli --ignore-unknown '**/*' --write",
     "generate-docs": "node scripts/generate-docs.ts && pnpm run copy:readme",
@@ -67,11 +67,6 @@
     "vitest": "^4.0.17"
   },
   "overrides": {
-    "@tanstack/template": "workspace:*",
-    "@tanstack/template-devtools": "workspace:*",
-    "@tanstack/react-template": "workspace:*",
-    "@tanstack/react-template-devtools": "workspace:*",
-    "@tanstack/solid-template": "workspace:*",
-    "@tanstack/solid-template-devtools": "workspace:*"
+    "@tanstack/agents": "workspace:*"
   }
 }

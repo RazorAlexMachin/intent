@@ -7,34 +7,10 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 await generateReferenceDocs({
   packages: [
     {
-      name: 'template',
-      entryPoints: [resolve(__dirname, '../packages/template/src/index.ts')],
-      tsconfig: resolve(__dirname, '../packages/template/tsconfig.docs.json'),
-      outputDir: resolve(__dirname, '../docs/reference'),
-    },
-    {
-      name: 'react-template',
-      entryPoints: [
-        resolve(__dirname, '../packages/react-template/src/index.ts'),
-      ],
-      tsconfig: resolve(
-        __dirname,
-        '../packages/react-template/tsconfig.docs.json',
-      ),
-      outputDir: resolve(__dirname, '../docs/framework/react/reference'),
-      exclude: ['packages/template/**/*'],
-    },
-    {
-      name: 'solid-template',
-      entryPoints: [
-        resolve(__dirname, '../packages/solid-template/src/index.ts'),
-      ],
-      tsconfig: resolve(
-        __dirname,
-        '../packages/solid-template/tsconfig.docs.json',
-      ),
-      outputDir: resolve(__dirname, '../docs/framework/solid/reference'),
-      exclude: ['packages/template/**/*'],
+      name: 'agents',
+      entryPoints: [resolve(__dirname, '../packages/agents/src/index.ts')],
+      tsconfig: resolve(__dirname, '../packages/agents/tsconfig.docs.json'),
+      outputDir: resolve(__dirname, '../docs/agents'),
     },
   ],
 })
