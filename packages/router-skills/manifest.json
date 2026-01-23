@@ -5,18 +5,25 @@
     "v1": {
       "index": "skills/v1/index.md",
       "files": [
+        "skills/v1/authenticated-routes.md",
+        "skills/v1/custom-search-serialization.md",
+        "skills/v1/data-loading-advanced.md",
         "skills/v1/data-refresh.md",
+        "skills/v1/document-head-management.md",
         "skills/v1/error-boundaries.md",
         "skills/v1/file-based-routing.md",
+        "skills/v1/history-types.md",
         "skills/v1/index.md",
         "skills/v1/layouts.md",
         "skills/v1/links.md",
         "skills/v1/loaders.md",
         "skills/v1/matching-and-location.md",
+        "skills/v1/navigation-blocking.md",
         "skills/v1/navigation.md",
         "skills/v1/not-found-boundaries.md",
         "skills/v1/params.md",
         "skills/v1/redirects.md",
+        "skills/v1/render-optimizations.md",
         "skills/v1/route-context.md",
         "skills/v1/route-ids.md",
         "skills/v1/route-lazy-loading.md",
@@ -26,8 +33,12 @@
         "skills/v1/router-devtools.md",
         "skills/v1/router-setup.md",
         "skills/v1/router-state.md",
+        "skills/v1/routing-strategies.md",
+        "skills/v1/scroll-restoration.md",
         "skills/v1/search-params.md",
-        "skills/v1/ssr-loaders.md"
+        "skills/v1/ssr-loaders.md",
+        "skills/v1/static-route-data.md",
+        "skills/v1/type-safety.md"
       ]
     }
   }

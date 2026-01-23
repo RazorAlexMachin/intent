@@ -29,6 +29,7 @@ Core setup and structure:
 - Creating a shared UI shell across child routes -> `@skills/router/layouts`
 - Stabilizing references when paths change -> `@skills/router/route-ids`
 - Attaching route metadata for UI or analytics -> `@skills/router/route-meta`
+- Picking a routing strategy -> `@skills/router/routing-strategies`
 
 Routing params and search:
 
@@ -40,6 +41,7 @@ Data loading and refresh:
 - Fetching route-critical data before render -> `@skills/router/loaders`
 - Passing dependencies like API clients to loaders -> `@skills/router/route-context`
 - Prefetching and invalidating after mutations -> `@skills/router/data-refresh`
+- Handling deferred/external data or mutations -> `@skills/router/data-loading-advanced`
 
 Navigation and links:
 
@@ -57,6 +59,7 @@ Errors, redirects, and masking:
 - Handling missing data or unmatched routes -> `@skills/router/not-found-boundaries`
 - Redirecting from loaders/actions -> `@skills/router/redirects`
 - Presenting friendly URLs for internal routes -> `@skills/router/route-masking`
+- Protecting routes behind auth -> `@skills/router/authenticated-routes`
 
 File-based routing:
 
@@ -67,6 +70,14 @@ Rendering and runtime:
 - Ensuring loader data is serializable for SSR -> `@skills/router/ssr-loaders`
 - Lazy-loading route modules for code-splitting -> `@skills/router/route-lazy-loading`
 - Inspecting routes and matches during development -> `@skills/router/router-devtools`
+- Managing head tags and titles -> `@skills/router/document-head-management`
+- Restoring scroll positions between navigations -> `@skills/router/scroll-restoration`
+- Blocking navigation on unsaved changes -> `@skills/router/navigation-blocking`
+- Choosing history implementations -> `@skills/router/history-types`
+- Customizing search param serialization -> `@skills/router/custom-search-serialization`
+- Attaching static route data -> `@skills/router/static-route-data`
+- Improving render performance -> `@skills/router/render-optimizations`
+- Tightening type safety and utilities -> `@skills/router/type-safety`
 
 Next:
 
