@@ -39,7 +39,11 @@ How to pick a skill:
 - Showing pending UI or transition state -> `@skills/router/router-state`
 - Ensuring loader data is serializable for SSR -> `@skills/router/ssr-loaders`
 - Reading a route match or match metadata -> `@skills/router/use-match`
+- Reading all active matches -> `@skills/router/use-matches`
 - Reading validated search params -> `@skills/router/use-search`
+- Reading loader data inside a route -> `@skills/router/use-loader-data`
+- Reading router context values -> `@skills/router/use-route-context`
+- Reading the full location (pathname, search, hash) -> `@skills/router/use-location`
 - Redirecting from loaders/actions -> `@skills/router/redirects`
 - Presenting friendly URLs for internal routes -> `@skills/router/route-masking`
 - Wiring the router into your app root -> `@skills/router/router-provider`
