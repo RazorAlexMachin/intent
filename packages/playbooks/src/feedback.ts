@@ -1,7 +1,9 @@
 import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { FeedbackPayload, PlaybookProjectConfig } from './types.js'
+import type { FeedbackPayload, MetaFeedbackPayload, PlaybookProjectConfig } from './types.js'
+
+const META_FEEDBACK_REPO = 'TanStack/playbooks'
 
 // ---------------------------------------------------------------------------
 // Secret detection
@@ -102,8 +104,98 @@ export function validatePayload(payload: unknown): { valid: boolean; errors: str
 }
 
 // ---------------------------------------------------------------------------
+// Meta-feedback payload validation
+// ---------------------------------------------------------------------------
+
+const META_REQUIRED_FIELDS: (keyof MetaFeedbackPayload)[] = [
+  'metaSkill', 'library', 'agentUsed', 'artifactQuality',
+  'whatWorked', 'whatFailed', 'suggestions', 'userRating',
+]
+
+const VALID_META_SKILLS = [
+  'domain-discovery', 'tree-generator', 'generate-skill', 'skill-staleness-check',
+]
+
+const VALID_AGENTS = ['oz', 'claude-code', 'cursor', 'copilot', 'codex', 'other']
+
+const VALID_QUALITY_RATINGS = ['good', 'mixed', 'bad']
+
+export function validateMetaPayload(payload: unknown): { valid: boolean; errors: string[] } {
+  const errors: string[] = []
+  if (!payload || typeof payload !== 'object') {
+    return { valid: false, errors: ['Payload must be a JSON object'] }
+  }
+  const obj = payload as Record<string, unknown>
+
+  for (const field of META_REQUIRED_FIELDS) {
+    if (typeof obj[field] !== 'string' || (obj[field] as string).trim() === '') {
+      errors.push(`Missing or empty required field: ${field}`)
+    }
+  }
+
+  if (obj.metaSkill && !VALID_META_SKILLS.includes(obj.metaSkill as string)) {
+    errors.push(`metaSkill must be one of: ${VALID_META_SKILLS.join(', ')}`)
+  }
+
+  if (obj.agentUsed && !VALID_AGENTS.includes(obj.agentUsed as string)) {
+    errors.push(`agentUsed must be one of: ${VALID_AGENTS.join(', ')}`)
+  }
+
+  if (obj.artifactQuality && !VALID_QUALITY_RATINGS.includes(obj.artifactQuality as string)) {
+    errors.push('artifactQuality must be one of: good, mixed, bad')
+  }
+
+  if (obj.userRating && !VALID_QUALITY_RATINGS.includes(obj.userRating as string)) {
+    errors.push('userRating must be one of: good, mixed, bad')
+  }
+
+  // Secret scan
+  const allText = Object.values(obj)
+    .filter((v) => typeof v === 'string')
+    .join('\n')
+
+  if (containsSecrets(allText)) {
+    errors.push('Payload appears to contain secrets or tokens — submission rejected')
+  }
+
+  return { valid: errors.length === 0, errors }
+}
+
+// ---------------------------------------------------------------------------
 // Markdown conversion
 // ---------------------------------------------------------------------------
+
+export function metaToMarkdown(payload: MetaFeedbackPayload): string {
+  const lines = [
+    `# Meta-Skill Feedback: ${payload.metaSkill}`,
+    '',
+    `**Library:** ${payload.library}`,
+    `**Agent:** ${payload.agentUsed}`,
+    `**Artifact quality:** ${payload.artifactQuality}`,
+    `**Rating:** ${payload.userRating}`,
+  ]
+
+  if (payload.interviewQuality) {
+    lines.push(`**Interview quality:** ${payload.interviewQuality}`)
+  }
+  if (payload.failureModeQuality) {
+    lines.push(`**Failure mode quality:** ${payload.failureModeQuality}`)
+  }
+
+  lines.push(
+    '',
+    '## What Worked',
+    payload.whatWorked,
+    '',
+    '## What Failed',
+    payload.whatFailed,
+    '',
+    '## Suggestions',
+    payload.suggestions,
+  )
+
+  return lines.join('\n') + '\n'
+}
 
 export function toMarkdown(payload: FeedbackPayload): string {
   const lines = [
@@ -177,16 +269,53 @@ export function submitFeedback(
 }
 
 // ---------------------------------------------------------------------------
+// Meta-feedback submission
+// ---------------------------------------------------------------------------
+
+export function submitMetaFeedback(
+  payload: MetaFeedbackPayload,
+  opts: { ghAvailable: boolean; outputPath?: string },
+): SubmitResult {
+  const md = metaToMarkdown(payload)
+
+  // Always route to TanStack/playbooks
+  if (opts.ghAvailable) {
+    try {
+      const title = `Meta-Skill Feedback: ${payload.metaSkill} (${payload.userRating})`
+      execSync(
+        `gh issue create --repo ${META_FEEDBACK_REPO} --title "${title.replace(/"/g, '\\"')}" --label "feedback:${payload.metaSkill}" --body -`,
+        { input: md, stdio: ['pipe', 'pipe', 'pipe'] },
+      )
+      return { method: 'gh', detail: `Submitted issue to ${META_FEEDBACK_REPO}` }
+    } catch {
+      // Fall through to file
+    }
+  }
+
+  if (opts.outputPath) {
+    writeFileSync(opts.outputPath, md, 'utf8')
+    return { method: 'file', detail: `Saved to ${opts.outputPath}` }
+  }
+
+  return { method: 'stdout', detail: md }
+}
+
+// ---------------------------------------------------------------------------
 // CLI runner
 // ---------------------------------------------------------------------------
 
 export function runFeedback(args: string[]): void {
+  const isMeta = args.includes('--meta')
   const submitFlag = args.includes('--submit')
   const fileIdx = args.indexOf('--file')
   const filePath = fileIdx !== -1 ? args[fileIdx + 1] : undefined
 
   if (!submitFlag || !filePath) {
-    console.error('Usage: playbook feedback --submit --file <path>')
+    if (isMeta) {
+      console.error('Usage: playbook feedback --meta --submit --file <path>')
+    } else {
+      console.error('Usage: playbook feedback --submit --file <path>')
+    }
     process.exit(1)
   }
 
@@ -203,18 +332,6 @@ export function runFeedback(args: string[]): void {
     process.exit(1)
   }
 
-  const validation = validatePayload(raw)
-  if (!validation.valid) {
-    console.error('Feedback validation failed:')
-    for (const err of validation.errors) console.error(`  - ${err}`)
-    process.exit(1)
-  }
-
-  const payload = raw as FeedbackPayload
-
-  // We need a repo to submit to — use package field as a fallback identifier
-  const repo = payload.package.replace(/^@/, '').replace(/\//, '/')
-
   const ghAvailable = hasGhCli()
   const frequency = resolveFrequency(process.cwd())
 
@@ -224,6 +341,49 @@ export function runFeedback(args: string[]): void {
   }
 
   const dateSuffix = new Date().toISOString().slice(0, 10)
+
+  if (isMeta) {
+    const validation = validateMetaPayload(raw)
+    if (!validation.valid) {
+      console.error('Meta-feedback validation failed:')
+      for (const err of validation.errors) console.error(`  - ${err}`)
+      process.exit(1)
+    }
+
+    const payload = raw as MetaFeedbackPayload
+    const fallbackPath = `playbook-meta-feedback-${dateSuffix}.md`
+
+    const result = submitMetaFeedback(payload, {
+      ghAvailable,
+      outputPath: ghAvailable ? undefined : fallbackPath,
+    })
+
+    switch (result.method) {
+      case 'gh':
+        console.log(`✓ ${result.detail}`)
+        break
+      case 'file':
+        console.log(`✓ ${result.detail}`)
+        console.log(`Open a GitHub Discussion at https://github.com/${META_FEEDBACK_REPO}/discussions/new?category=Feedback`)
+        break
+      case 'stdout':
+        console.log('--- Meta-feedback markdown (copy/paste to discussion) ---')
+        console.log(result.detail)
+        break
+    }
+    return
+  }
+
+  // Standard skill feedback
+  const validation = validatePayload(raw)
+  if (!validation.valid) {
+    console.error('Feedback validation failed:')
+    for (const err of validation.errors) console.error(`  - ${err}`)
+    process.exit(1)
+  }
+
+  const payload = raw as FeedbackPayload
+  const repo = payload.package.replace(/^@/, '').replace(/\//, '/')
   const fallbackPath = `playbook-feedback-${dateSuffix}.md`
 
   const result = submitFeedback(payload, repo, {

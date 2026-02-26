@@ -1,18 +1,19 @@
 ---
 name: skill-generate
 description: >
-  Generate a complete SKILL.md file for the @tanstack/playbooks repo from
-  source documentation and domain map artifacts. Activate when bootstrapping
-  skills for a new library, regenerating a stale skill after source changes,
-  or producing a skill from a domain_map.yaml entry. Takes a skill name,
-  description, and source docs as inputs; outputs a validated SKILL.md that
-  conforms to the tree-generator spec.
+  Generate a complete SKILL.md file for a library from source documentation
+  and skill tree artifacts. Activate when bootstrapping skills for a new
+  library, regenerating a stale skill after source changes, or producing a
+  skill from a skill_tree.yaml entry. Takes a skill name, description, and
+  source docs as inputs; outputs a validated SKILL.md that conforms to the
+  tree-generator spec.
 metadata:
-  version: "1.0"
+  version: '1.0'
   category: meta-tooling
   input_artifacts:
-    - domain_map.yaml
-    - skill_spec.md
+    - skills/_artifacts/skill_tree.yaml
+    - skills/_artifacts/domain_map.yaml
+    - skills/_artifacts/skill_spec.md
     - source documentation
   output_artifacts:
     - SKILL.md
@@ -43,6 +44,9 @@ from source documentation provided as input.
 
 You will receive:
 
+If the maintainer uses a custom skills root, replace `skills/` in any paths
+below with their chosen directory.
+
 1. **Skill name** — format `library-group/skill-name` (e.g. `tanstack-query/core`,
    `tanstack-router/loaders`, `db/core/live-queries`)
 2. **Skill description** — what the skill covers and when an agent should load it
@@ -57,14 +61,14 @@ You will receive:
 
 Read the inputs and classify the skill type:
 
-| Type | When to use |
-|------|-------------|
-| `core` | Framework-agnostic concepts, configuration, patterns |
-| `sub-skill` | A focused sub-topic within a core or framework skill |
-| `framework` | Framework-specific bindings, hooks, components |
-| `lifecycle` | Cross-cutting developer journey (getting started, go-live) |
-| `composition` | Integration between two or more libraries |
-| `security` | Audit checklist or security validation |
+| Type          | When to use                                                |
+| ------------- | ---------------------------------------------------------- |
+| `core`        | Framework-agnostic concepts, configuration, patterns       |
+| `sub-skill`   | A focused sub-topic within a core or framework skill       |
+| `framework`   | Framework-specific bindings, hooks, components             |
+| `lifecycle`   | Cross-cutting developer journey (getting started, go-live) |
+| `composition` | Integration between two or more libraries                  |
+| `security`    | Audit checklist or security validation                     |
 
 The skill type determines the frontmatter and body structure. See
 skill-tree-generator for the full spec of each type.
@@ -180,6 +184,7 @@ This skill builds on [parent-skill]. Read it first for foundational concepts.
 **2. Setup**
 
 A complete, copy-pasteable code block showing minimum viable usage.
+
 - Real package imports with exact names (`@tanstack/react-query`, not `react-query`)
 - No `// ...` or `[your code here]` — complete and runnable
 - No unnecessary boilerplate — include exactly the context needed
@@ -189,6 +194,7 @@ A complete, copy-pasteable code block showing minimum viable usage.
 **3. Core Patterns** (or "Hooks and Components" for framework skills)
 
 2–4 patterns. For each:
+
 - One-line heading: what it accomplishes
 - Complete code block
 - One sentence of explanation only if not self-explanatory
@@ -197,15 +203,18 @@ A complete, copy-pasteable code block showing minimum viable usage.
 
 Minimum 3 entries. Complex skills target 5–6. Format:
 
-```markdown
+````markdown
 ### [PRIORITY] [What goes wrong — 5–8 word phrase]
 
 Wrong:
+
 ```[lang]
 // code that looks correct but isn't
 ```
+````
 
 Correct:
+
 ```[lang]
 // code that works
 ```
@@ -213,7 +222,8 @@ Correct:
 [One sentence: the specific mechanism by which the wrong version fails.]
 
 Source: [doc page or source file:line]
-```
+
+````
 
 Priority levels:
 - **CRITICAL** — Breaks in production. Security risk or data loss.
@@ -234,7 +244,7 @@ multiple skills, include those failure modes in every SKILL file listed.
 ## References
 
 - [Full option reference](references/options.md)
-```
+````
 
 Create reference files when the skill would exceed 500 lines, when the
 domain covers 3+ independent adapters/backends, or when a topic has >10
@@ -244,7 +254,7 @@ distinct API patterns.
 
 Use when the primary action is "check these things" not "learn patterns":
 
-```markdown
+````markdown
 # [Library Name] — [Security | Go-Live] Checklist
 
 Run through each section before [deploying | releasing].
@@ -254,9 +264,11 @@ Run through each section before [deploying | releasing].
 ### Check: [what to verify]
 
 Expected:
+
 ```[lang]
 // correct configuration
 ```
+````
 
 Fail condition: [what indicates this check failed]
 Fix: [one-line remediation]
@@ -269,6 +281,7 @@ Fix: [one-line remediation]
 
 - [ ] [Verification 1]
 - [ ] [Verification 2]
+
 ```
 
 ---
@@ -356,3 +369,51 @@ Output is consumed by all major AI coding agents. To ensure consistency:
 - Positive instructions ("Use X") over negative ("Don't use Y")
 - Critical info at start or end of sections (not buried in middle)
 - Each SKILL.md is self-contained except for declared `requires`
+
+---
+
+## Meta-skill feedback (alpha default)
+
+After generating the first iteration of skills, complete a single Markdown
+feedback draft for all three meta skills used in scaffolding. If a draft
+exists from previous steps, keep it and fill the **Generate Skill** section.
+If no draft exists, create it using this exact template.
+
+```
+
+# Playbook Meta Skill Feedback
+
+## Domain Discovery
+
+- What worked well:
+- What was confusing or missing:
+- Suggestions for improvement:
+- Overall rating: good | mixed | bad
+
+## Tree Generator
+
+- What worked well:
+- What was confusing or missing:
+- Suggestions for improvement:
+- Overall rating: good | mixed | bad
+
+## Generate Skill
+
+- What worked well:
+- What was confusing or missing:
+- Suggestions for improvement:
+- Overall rating: good | mixed | bad
+
+## Context (optional)
+
+- Library:
+- Repo:
+- Docs:
+- Notes:
+
+```
+
+Ask the maintainer if they want to edit the feedback. Then ask if you should
+send it as a GitHub issue to TanStack/playbooks. Use the issue title:
+`[meta-feedback] playbook meta skill`. Only submit if they confirm.
+```

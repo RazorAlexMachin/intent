@@ -8,9 +8,6 @@
     },
     "packages/playbooks": {
       "ignore": ["meta/**"]
-    },
-    "packages/react-pacer": {
-      "ignore": []
     }
   }
 }

@@ -27,6 +27,11 @@ jobs:
               { pattern: /\bstore\//, label: 'feedback:store' },
               { pattern: /\bdb\//, label: 'feedback:db' },
               { pattern: /\bcompositions\//, label: 'feedback:compositions' },
+              { pattern: /\bdomain-discovery\b/, label: 'feedback:domain-discovery' },
+              { pattern: /\btree-generator\b/, label: 'feedback:tree-generator' },
+              { pattern: /\bgenerate-skill\b/, label: 'feedback:generate-skill' },
+              { pattern: /\bstaleness-check\b/, label: 'feedback:staleness-check' },
+              { pattern: /Meta-Skill Feedback/, label: 'feedback:meta' },
             ]
 
             const labels = libraryPatterns

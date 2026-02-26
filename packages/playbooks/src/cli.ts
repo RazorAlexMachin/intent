@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { release } from 'node:os'
 import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
@@ -95,9 +97,8 @@ function cmdMeta(): void {
       description = fm.description.replace(/\s+/g, ' ').trim()
     }
 
-    const shortDesc = description.length > 60
-      ? description.slice(0, 57) + '...'
-      : description
+    const shortDesc =
+      description.length > 60 ? description.slice(0, 57) + '...' : description
     console.log(`  ${entry.name.padEnd(28)} ${shortDesc}`)
   }
 
@@ -137,6 +138,11 @@ function cmdValidate(args: string[]): void {
       continue
     }
 
+    if (!match[1]) {
+      errors.push({ file: rel, message: 'Missing YAML frontmatter' })
+      continue
+    }
+
     let fm: Record<string, unknown>
     try {
       fm = parseYaml(match[1]) as Record<string, unknown>
@@ -145,8 +151,10 @@ function cmdValidate(args: string[]): void {
       continue
     }
 
-    if (!fm.name) errors.push({ file: rel, message: 'Missing required field: name' })
-    if (!fm.description) errors.push({ file: rel, message: 'Missing required field: description' })
+    if (!fm.name)
+      errors.push({ file: rel, message: 'Missing required field: name' })
+    if (!fm.description)
+      errors.push({ file: rel, message: 'Missing required field: description' })
 
     // Validate name matches directory path
     if (typeof fm.name === 'string') {
@@ -164,13 +172,59 @@ function cmdValidate(args: string[]): void {
 
     // Framework skills must have requires
     if (fm.type === 'framework' && !Array.isArray(fm.requires)) {
-      errors.push({ file: rel, message: 'Framework skills must have a "requires" field' })
+      errors.push({
+        file: rel,
+        message: 'Framework skills must have a "requires" field',
+      })
     }
 
     // Line count
     const lineCount = content.split(/\r?\n/).length
     if (lineCount > 500) {
-      errors.push({ file: rel, message: `Exceeds 500 line limit (${lineCount} lines)` })
+      errors.push({
+        file: rel,
+        message: `Exceeds 500 line limit (${lineCount} lines)`,
+      })
+    }
+  }
+
+  const artifactsDir = join(skillsDir, '_artifacts')
+  if (existsSync(artifactsDir)) {
+    const requiredArtifacts = [
+      'domain_map.yaml',
+      'skill_spec.md',
+      'skill_tree.yaml',
+    ]
+
+    for (const fileName of requiredArtifacts) {
+      const artifactPath = join(artifactsDir, fileName)
+      if (!existsSync(artifactPath)) {
+        errors.push({
+          file: relative(process.cwd(), artifactPath),
+          message: 'Missing required artifact',
+        })
+        continue
+      }
+
+      const content = readFileSync(artifactPath, 'utf8')
+      if (content.trim().length === 0) {
+        errors.push({
+          file: relative(process.cwd(), artifactPath),
+          message: 'Artifact file is empty',
+        })
+        continue
+      }
+
+      if (fileName.endsWith('.yaml')) {
+        try {
+          parseYaml(content)
+        } catch {
+          errors.push({
+            file: relative(process.cwd(), artifactPath),
+            message: 'Invalid YAML in artifact file',
+          })
+        }
+      }
     }
   }
 
@@ -185,6 +239,84 @@ function cmdValidate(args: string[]): void {
   console.log(`✅ Validated ${skillFiles.length} skill files — all passed`)
 }
 
+function cmdScaffold(): void {
+  function tryCopyToClipboard(text: string): boolean {
+    const platform = process.platform
+    const isWsl =
+      platform === 'linux' &&
+      (Boolean(process.env.WSL_DISTRO_NAME) ||
+        Boolean(process.env.WSL_INTEROP) ||
+        release().toLowerCase().includes('microsoft'))
+
+    const tryCommand = (command: string, args: string[] = []) => {
+      const result = spawnSync(command, args, { input: text })
+      return result.status === 0
+    }
+
+    if (platform === 'darwin') return tryCommand('pbcopy')
+    if (platform === 'win32') return tryCommand('clip')
+    if (isWsl) return tryCommand('clip.exe')
+
+    return (
+      tryCommand('wl-copy') ||
+      tryCommand('xclip', ['-selection', 'clipboard']) ||
+      tryCommand('xsel', ['--clipboard', '--input'])
+    )
+  }
+
+  const prompt = `You are an AI assistant helping a library maintainer scaffold Playbook skills.
+You MUST use the Playbooks meta skills in this exact order and follow their output requirements.
+
+Before you start, ask the maintainer for their skills root path.
+- Default: skills/
+- If they choose a different path, replace "skills/" in all output paths below.
+
+1) Meta skill: domain-discovery
+   - Input: library name, repo URL, docs URL(s), scope constraints, target audience.
+   - Output files (exact paths):
+     - skills/_artifacts/domain_map.yaml
+     - skills/_artifacts/skill_spec.md
+   - These artifacts are maintainer-owned and should be committed to the repo.
+
+2) Meta skill: tree-generator
+   - Input: skills/_artifacts/domain_map.yaml + skills/_artifacts/skill_spec.md
+   - Output file (exact path):
+     - skills/_artifacts/skill_tree.yaml
+
+3) Meta skill: generate-skill
+   - Input: skills/_artifacts/skill_tree.yaml
+   - Output files (exact path pattern):
+     - skills/<domain>/<skill>/SKILL.md
+
+Guidance for the maintainer:
+- If any input is missing, ask for it.
+- After each step, clearly tell the maintainer what files to create and where to save them.
+- Do not skip steps.
+- Use the library's actual terminology from docs and source.
+
+At the end, produce a single Markdown feedback doc with three sections (Domain Discovery, Tree Generator, Generate Skill).
+Ask if the maintainer wants to edit it, then ask if you should send it as a GitHub issue to TanStack/playbooks.
+Use the issue title: [meta-feedback] playbook meta skill.
+
+Finish with a short checklist:
+- Run npx playbook validate
+- Commit skills/ and skills/_artifacts/ (artifacts are repo-only)
+- Exclude skills/_artifacts/ from package publishing
+- Add README snippet: If you use an AI agent, run npx playbook init
+`
+
+  console.log('🚀 Playbook Scaffold Prompt')
+  console.log('✨ Copy the prompt below into your AI agent:\n')
+  console.log(prompt)
+
+  const copied = tryCopyToClipboard(prompt)
+  if (copied) {
+    console.log('\n✅ Copied prompt to clipboard')
+  } else {
+    console.log('\n⚠ Tip: Manually copy the prompt above into your agent')
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -196,8 +328,11 @@ Usage:
   playbook meta                    List meta-skills for maintainers
   playbook validate [<dir>]        Validate skill files (default: skills/)
   playbook init                    Set up playbook discovery in agent configs
+  playbook scaffold                Print maintainer scaffold prompt
+  playbook setup [--workflows] [--oz] [--all]  Copy CI/Oz templates into your repo
   playbook stale                   Check skills for staleness
-  playbook feedback --submit --file <path>  Submit feedback`
+  playbook feedback --submit --file <path>           Submit skill feedback
+  playbook feedback --meta --submit --file <path>    Submit meta-skill feedback`
 
 const command = process.argv[2]
 const commandArgs = process.argv.slice(3)
@@ -217,19 +352,26 @@ switch (command) {
     const initRoot = process.cwd()
     const result = runInit(initRoot)
 
-    for (const f of result.injected) console.log(`✓ Added playbook block to ${f}`)
+    for (const f of result.injected)
+      console.log(`✓ Added playbook block to ${f}`)
     for (const f of result.skipped) console.log(`  Already present in ${f}`)
     for (const f of result.created) console.log(`✓ Created ${f}`)
 
     if (result.injected.length === 0 && result.skipped.length === 0) {
       const detected = detectAgentConfigs(initRoot)
       if (detected.length === 0) {
-        console.log('No agent config files found (AGENTS.md, CLAUDE.md, .cursorrules, .github/copilot-instructions.md).')
+        console.log(
+          'No agent config files found (AGENTS.md, CLAUDE.md, .cursorrules, .github/copilot-instructions.md).',
+        )
         console.log('Create one of these files and run playbook init again.')
       }
     }
 
     console.log(`✓ Config: ${result.configPath}`)
+    break
+  }
+  case 'scaffold': {
+    cmdScaffold()
     break
   }
   case 'stale': {
@@ -262,9 +404,13 @@ switch (command) {
     }
 
     for (const report of reports) {
-      const driftLabel = report.versionDrift ? ` [${report.versionDrift} drift]` : ''
-      const vLabel = report.skillVersion && report.currentVersion
-        ? ` (${report.skillVersion} → ${report.currentVersion})` : ''
+      const driftLabel = report.versionDrift
+        ? ` [${report.versionDrift} drift]`
+        : ''
+      const vLabel =
+        report.skillVersion && report.currentVersion
+          ? ` (${report.skillVersion} → ${report.currentVersion})`
+          : ''
       console.log(`${report.library}${vLabel}${driftLabel}`)
 
       const stale = report.skills.filter((s) => s.needsReview)
@@ -282,6 +428,11 @@ switch (command) {
   case 'feedback': {
     const { runFeedback } = await import('./feedback.js')
     runFeedback(commandArgs)
+    break
+  }
+  case 'setup': {
+    const { runSetup } = await import('./setup.js')
+    runSetup(process.cwd(), getMetaDir(), commandArgs)
     break
   }
   default:

@@ -70,6 +70,37 @@ export interface FeedbackPayload {
 }
 
 // ---------------------------------------------------------------------------
+// Meta-skill feedback types
+// ---------------------------------------------------------------------------
+
+export type MetaSkillName =
+  | 'domain-discovery'
+  | 'tree-generator'
+  | 'generate-skill'
+  | 'skill-staleness-check'
+
+export type AgentName =
+  | 'oz'
+  | 'claude-code'
+  | 'cursor'
+  | 'copilot'
+  | 'codex'
+  | 'other'
+
+export interface MetaFeedbackPayload {
+  metaSkill: MetaSkillName
+  library: string
+  agentUsed: AgentName
+  artifactQuality: 'good' | 'mixed' | 'bad'
+  interviewQuality?: 'good' | 'mixed' | 'bad' | 'skipped'
+  failureModeQuality?: 'good' | 'mixed' | 'bad' | 'not-applicable'
+  whatWorked: string
+  whatFailed: string
+  suggestions: string
+  userRating: 'good' | 'mixed' | 'bad'
+}
+
+// ---------------------------------------------------------------------------
 // Config types
 // ---------------------------------------------------------------------------
 
