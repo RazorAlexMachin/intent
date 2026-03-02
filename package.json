@@ -64,7 +64,6 @@
   },
   "overrides": {},
   "dependencies": {
-    "-": "^0.0.1",
     "@tanstack/typedoc-config": "^0.3.3"
   }
 }
