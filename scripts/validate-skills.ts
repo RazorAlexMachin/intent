@@ -30,8 +30,7 @@ const MAX_LINES = 500
 
 const PROHIBITED_PATTERNS: Array<{ pattern: RegExp; description: string }> = [
   {
-    pattern:
-      /(?:npm|yarn|pnpm|bun)\s+(?:install|add|i)\s/i,
+    pattern: /(?:npm|yarn|pnpm|bun)\s+(?:install|add|i)\s/i,
     description: 'Install instructions',
   },
   {

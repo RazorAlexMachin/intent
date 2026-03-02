@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from 'node:fs'
 import { join } from 'node:path'
 
 // ---------------------------------------------------------------------------
@@ -28,18 +34,19 @@ function detectVars(root: string): TemplateVars {
   let pkgJson: Record<string, unknown> = {}
   try {
     pkgJson = JSON.parse(readFileSync(pkgPath, 'utf8'))
-  } catch { /* fallback to defaults */ }
+  } catch {
+    /* fallback to defaults */
+  }
 
   const name = typeof pkgJson.name === 'string' ? pkgJson.name : 'unknown'
   const playbook = pkgJson.playbook as Record<string, unknown> | undefined
 
-  const repo = typeof playbook?.repo === 'string'
-    ? playbook.repo
-    : name.replace(/^@/, '').replace(/\//, '/')
+  const repo =
+    typeof playbook?.repo === 'string'
+      ? playbook.repo
+      : name.replace(/^@/, '').replace(/\//, '/')
 
-  const docs = typeof playbook?.docs === 'string'
-    ? playbook.docs
-    : 'docs/'
+  const docs = typeof playbook?.docs === 'string' ? playbook.docs : 'docs/'
 
   // Best-guess src path from common monorepo patterns
   const shortName = name.replace(/^@[^/]+\//, '')
@@ -131,7 +138,11 @@ function generateShim(root: string, result: SetupResult): void {
 // Main
 // ---------------------------------------------------------------------------
 
-export function runSetup(root: string, metaDir: string, args: string[]): SetupResult {
+export function runSetup(
+  root: string,
+  metaDir: string,
+  args: string[],
+): SetupResult {
   const doAll = args.includes('--all')
   const doWorkflows = doAll || args.includes('--workflows')
   const doOz = doAll || args.includes('--oz')
@@ -186,7 +197,9 @@ export function runSetup(root: string, metaDir: string, args: string[]): SetupRe
     result.shim === null &&
     result.skipped.length === 0
   ) {
-    console.log('No templates directory found. Is @tanstack/playbooks installed?')
+    console.log(
+      'No templates directory found. Is @tanstack/playbooks installed?',
+    )
   } else if (result.workflows.length > 0 || result.oz.length > 0) {
     console.log(`\nTemplate variables applied:`)
     console.log(`  Package:  ${vars.PACKAGE_NAME}`)

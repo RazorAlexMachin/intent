@@ -22,7 +22,10 @@ function writeSkillMd(dir: string, frontmatter: Record<string, unknown>): void {
   const yamlLines = Object.entries(frontmatter)
     .map(([k, v]) => `${k}: ${typeof v === 'string' ? `"${v}"` : v}`)
     .join('\n')
-  writeFileSync(join(dir, 'SKILL.md'), `---\n${yamlLines}\n---\n\nSkill content here.\n`)
+  writeFileSync(
+    join(dir, 'SKILL.md'),
+    `---\n${yamlLines}\n---\n\nSkill content here.\n`,
+  )
 }
 
 // Simulate the script path as it would appear in a library's bin/playbook.js shim.
@@ -73,7 +76,9 @@ describe('scanLibrary', () => {
     expect(result.packages[0]!.description).toBe('Type-safe router for React')
     expect(result.packages[0]!.skills).toHaveLength(1)
     expect(result.packages[0]!.skills[0]!.name).toBe('routing')
-    expect(result.packages[0]!.skills[0]!.description).toBe('File-based route definitions')
+    expect(result.packages[0]!.skills[0]!.description).toBe(
+      'File-based route definitions',
+    )
   })
 
   it('includes the full path to each SKILL.md', async () => {
@@ -103,7 +108,10 @@ describe('scanLibrary', () => {
       dependencies: { '@tanstack/query': '^5.0.0' },
     })
     const routerSkill = createDir(routerDir, 'skills', 'routing')
-    writeSkillMd(routerSkill, { name: 'routing', description: 'Route definitions' })
+    writeSkillMd(routerSkill, {
+      name: 'routing',
+      description: 'Route definitions',
+    })
 
     // Dep package: @tanstack/query
     const queryDir = createDir(root, 'node_modules', '@tanstack', 'query')
@@ -114,7 +122,10 @@ describe('scanLibrary', () => {
       bin: { playbook: './bin/playbook.js' },
     })
     const querySkill = createDir(queryDir, 'skills', 'fetching')
-    writeSkillMd(querySkill, { name: 'fetching', description: 'Query and mutation patterns' })
+    writeSkillMd(querySkill, {
+      name: 'fetching',
+      description: 'Query and mutation patterns',
+    })
 
     const result = await scanLibrary(shimPath(routerDir), root)
 
@@ -227,9 +238,15 @@ describe('scanLibrary', () => {
       bin: { playbook: './bin/playbook.js' },
     })
     const routingDir = createDir(pkgDir, 'skills', 'routing')
-    writeSkillMd(routingDir, { name: 'routing', description: 'Routing overview' })
+    writeSkillMd(routingDir, {
+      name: 'routing',
+      description: 'Routing overview',
+    })
     const nestedDir = createDir(routingDir, 'nested-routes')
-    writeSkillMd(nestedDir, { name: 'routing/nested-routes', description: 'Nested route patterns' })
+    writeSkillMd(nestedDir, {
+      name: 'routing/nested-routes',
+      description: 'Nested route patterns',
+    })
 
     const result = await scanLibrary(shimPath(pkgDir), root)
 

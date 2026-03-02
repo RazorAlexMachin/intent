@@ -85,7 +85,8 @@ function discoverSkills(skillsDir: string): SkillEntry[] {
               ? fm.description.replace(/\s+/g, ' ').trim()
               : '',
           type: typeof fm?.type === 'string' ? fm.type : undefined,
-          framework: typeof fm?.framework === 'string' ? fm.framework : undefined,
+          framework:
+            typeof fm?.framework === 'string' ? fm.framework : undefined,
         })
         walk(childDir)
       }
@@ -100,7 +101,10 @@ function discoverSkills(skillsDir: string): SkillEntry[] {
 // Main scanner
 // ---------------------------------------------------------------------------
 
-export async function scanLibrary(scriptPath: string, projectRoot?: string): Promise<LibraryScanResult> {
+export async function scanLibrary(
+  scriptPath: string,
+  projectRoot?: string,
+): Promise<LibraryScanResult> {
   const nodeModulesDir = join(projectRoot ?? process.cwd(), 'node_modules')
   const packages: LibraryPackage[] = []
   const warnings: string[] = []
@@ -108,7 +112,10 @@ export async function scanLibrary(scriptPath: string, projectRoot?: string): Pro
 
   const homeDir = findHomeDir(scriptPath)
   if (!homeDir) {
-    return { packages, warnings: ['Could not determine home package directory'] }
+    return {
+      packages,
+      warnings: ['Could not determine home package directory'],
+    }
   }
 
   const homePkg = readPkgJson(homeDir)
