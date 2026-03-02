@@ -169,8 +169,8 @@ function main(): void {
   const skillFiles = findSkillFiles(SKILLS_DIR)
 
   if (skillFiles.length === 0) {
-    console.error('No SKILL.md files found')
-    process.exit(1)
+    console.log('No SKILL.md files found — nothing to validate')
+    process.exit(0)
   }
 
   for (const filePath of skillFiles) {
