@@ -157,7 +157,6 @@ const VALID_META_SKILLS = [
 ]
 
 const VALID_AGENTS = [
-  'oz',
   'claude-code',
   'cursor',
   'copilot',

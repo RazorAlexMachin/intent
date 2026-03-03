@@ -80,7 +80,6 @@ export type MetaSkillName =
   | 'skill-staleness-check'
 
 export type AgentName =
-  | 'oz'
   | 'claude-code'
   | 'cursor'
   | 'copilot'
