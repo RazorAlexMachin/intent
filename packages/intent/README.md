@@ -50,16 +50,16 @@ npx intent setup
 
 ## CLI Commands
 
-| Command                  | Description                                      |
-| ------------------------ | ------------------------------------------------ |
-| `intent init`            | Inject intent discovery into agent config files  |
-| `intent list [--json]`   | Discover intent-enabled packages                 |
-| `intent meta`            | List meta-skills for library maintainers         |
-| `intent scaffold`        | Print the guided skill generation prompt         |
-| `intent validate [dir]`  | Validate SKILL.md files                          |
-| `intent setup`           | Copy CI/Oz workflow templates                    |
-| `intent stale [--json]`  | Check skills for version drift                   |
-| `intent feedback`        | Submit skill feedback                            |
+| Command                 | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `intent init`           | Inject intent discovery into agent config files |
+| `intent list [--json]`  | Discover intent-enabled packages                |
+| `intent meta`           | List meta-skills for library maintainers        |
+| `intent scaffold`       | Print the guided skill generation prompt        |
+| `intent validate [dir]` | Validate SKILL.md files                         |
+| `intent setup`          | Copy CI/Oz workflow templates                   |
+| `intent stale [--json]` | Check skills for version drift                  |
+| `intent feedback`       | Submit skill feedback                           |
 
 ## License
 

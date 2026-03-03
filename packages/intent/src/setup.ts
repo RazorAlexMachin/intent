@@ -197,9 +197,7 @@ export function runSetup(
     result.shim === null &&
     result.skipped.length === 0
   ) {
-    console.log(
-      'No templates directory found. Is @tanstack/intent installed?',
-    )
+    console.log('No templates directory found. Is @tanstack/intent installed?')
   } else if (result.workflows.length > 0 || result.oz.length > 0) {
     console.log(`\nTemplate variables applied:`)
     console.log(`  Package:  ${vars.PACKAGE_NAME}`)

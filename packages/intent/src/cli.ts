@@ -352,8 +352,7 @@ switch (command) {
     const initRoot = process.cwd()
     const result = runInit(initRoot)
 
-    for (const f of result.injected)
-      console.log(`✓ Added intent block to ${f}`)
+    for (const f of result.injected) console.log(`✓ Added intent block to ${f}`)
     for (const f of result.skipped) console.log(`  Already present in ${f}`)
     for (const f of result.created) console.log(`✓ Created ${f}`)
 
