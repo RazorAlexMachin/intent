@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 
-import { spawnSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { release } from 'node:os'
 import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
@@ -353,30 +351,6 @@ function cmdValidate(args: string[]): void {
 }
 
 function cmdScaffold(): void {
-  function tryCopyToClipboard(text: string): boolean {
-    const platform = process.platform
-    const isWsl =
-      platform === 'linux' &&
-      (Boolean(process.env.WSL_DISTRO_NAME) ||
-        Boolean(process.env.WSL_INTEROP) ||
-        release().toLowerCase().includes('microsoft'))
-
-    const tryCommand = (command: string, args: string[] = []) => {
-      const result = spawnSync(command, args, { input: text })
-      return result.status === 0
-    }
-
-    if (platform === 'darwin') return tryCommand('pbcopy')
-    if (platform === 'win32') return tryCommand('clip')
-    if (isWsl) return tryCommand('clip.exe')
-
-    return (
-      tryCommand('wl-copy') ||
-      tryCommand('xclip', ['-selection', 'clipboard']) ||
-      tryCommand('xsel', ['--clipboard', '--input'])
-    )
-  }
-
   const prompt = `You are an AI assistant helping a library maintainer scaffold Intent skills.
 You MUST use the Intent meta skills in this exact order and follow their output requirements.
 
@@ -408,8 +382,7 @@ Guidance for the maintainer:
 - Use the library's actual terminology from docs and source.
 
 At the end, produce a single Markdown feedback doc with three sections (Domain Discovery, Tree Generator, Generate Skill).
-Ask if the maintainer wants to edit it, then ask if you should send it as a GitHub issue to TanStack/intent.
-Use the issue title: [meta-feedback] intent meta skill.
+Ask if the maintainer wants to edit it, then submit it via: npx intent feedback --meta --submit --file <path>
 
 Finish with a short checklist:
 - Run npx intent validate
@@ -418,16 +391,7 @@ Finish with a short checklist:
 - Add README snippet: If you use an AI agent, run npx intent init
 `
 
-  console.log('🚀 Intent Scaffold Prompt')
-  console.log('✨ Copy the prompt below into your AI agent:\n')
   console.log(prompt)
-
-  const copied = tryCopyToClipboard(prompt)
-  if (copied) {
-    console.log('\n✅ Copied prompt to clipboard')
-  } else {
-    console.log('\n⚠ Tip: Manually copy the prompt above into your agent')
-  }
 }
 
 // ---------------------------------------------------------------------------

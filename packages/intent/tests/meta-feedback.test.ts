@@ -178,7 +178,7 @@ describe('metaToMarkdown', () => {
 describe('submitMetaFeedback', () => {
   it('saves to file when gh not available and outputPath given', () => {
     const outPath = join(tmpDir, 'meta-feedback.md')
-    const result = submitMetaFeedback(validMetaPayload(), {
+    const result = submitMetaFeedback(validMetaPayload(), 'TanStack/query', {
       ghAvailable: false,
       outputPath: outPath,
     })
@@ -190,7 +190,7 @@ describe('submitMetaFeedback', () => {
   })
 
   it('returns stdout when no gh and no outputPath', () => {
-    const result = submitMetaFeedback(validMetaPayload(), {
+    const result = submitMetaFeedback(validMetaPayload(), 'TanStack/query', {
       ghAvailable: false,
     })
     expect(result.method).toBe('stdout')

@@ -7,8 +7,6 @@ import type {
   MetaFeedbackPayload,
 } from './types.js'
 
-const META_FEEDBACK_REPO = 'TanStack/intent'
-
 // ---------------------------------------------------------------------------
 // Secret detection
 // ---------------------------------------------------------------------------
@@ -328,21 +326,21 @@ export function submitFeedback(
 
 export function submitMetaFeedback(
   payload: MetaFeedbackPayload,
+  repo: string,
   opts: { ghAvailable: boolean; outputPath?: string },
 ): SubmitResult {
   const md = metaToMarkdown(payload)
 
-  // Always route to TanStack/intent
   if (opts.ghAvailable) {
     try {
       const title = `Meta-Skill Feedback: ${payload.metaSkill} (${payload.userRating})`
       execSync(
-        `gh issue create --repo ${META_FEEDBACK_REPO} --title "${title.replace(/"/g, '\\"')}" --label "feedback:${payload.metaSkill}" --body -`,
+        `gh issue create --repo ${repo} --title "${title.replace(/"/g, '\\"')}" --label "feedback:${payload.metaSkill}" --body -`,
         { input: md, stdio: ['pipe', 'pipe', 'pipe'] },
       )
       return {
         method: 'gh',
-        detail: `Submitted issue to ${META_FEEDBACK_REPO}`,
+        detail: `Submitted issue to ${repo}`,
       }
     } catch {
       // Fall through to file
@@ -408,9 +406,10 @@ export function runFeedback(args: string[]): void {
     }
 
     const payload = raw as MetaFeedbackPayload
+    const repo = payload.library.replace(/^@/, '').replace(/\//, '/')
     const fallbackPath = `intent-meta-feedback-${dateSuffix}.md`
 
-    const result = submitMetaFeedback(payload, {
+    const result = submitMetaFeedback(payload, repo, {
       ghAvailable,
       outputPath: ghAvailable ? undefined : fallbackPath,
     })
@@ -422,11 +421,11 @@ export function runFeedback(args: string[]): void {
       case 'file':
         console.log(`✓ ${result.detail}`)
         console.log(
-          `Open a GitHub Discussion at https://github.com/${META_FEEDBACK_REPO}/discussions/new?category=Feedback`,
+          `You can manually open an issue at https://github.com/${repo}/issues with this content.`,
         )
         break
       case 'stdout':
-        console.log('--- Meta-feedback markdown (copy/paste to discussion) ---')
+        console.log('--- Meta-feedback markdown (copy/paste to issue) ---')
         console.log(result.detail)
         break
     }
