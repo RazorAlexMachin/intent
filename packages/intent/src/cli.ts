@@ -28,12 +28,9 @@ function padColumn(text: string, width: number): string {
   return text.length >= width ? text + '  ' : text.padEnd(width)
 }
 
-function printTable(
-  headers: string[],
-  rows: string[][],
-): void {
-  const widths = headers.map((h, i) =>
-    Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)) + 2,
+function printTable(headers: string[], rows: string[][]): void {
+  const widths = headers.map(
+    (h, i) => Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)) + 2,
   )
 
   const headerLine = headers.map((h, i) => padColumn(h, widths[i]!)).join('')
@@ -103,9 +100,7 @@ function printSkillLine(
   console.log(`${nameStr}${padding}${typeCol}${skill.description}`)
 }
 
-function computeSkillNameWidth(
-  allPackageSkills: SkillDisplay[][],
-): number {
+function computeSkillNameWidth(allPackageSkills: SkillDisplay[][]): number {
   let max = 0
   for (const skills of allPackageSkills) {
     for (const s of skills) {
@@ -143,7 +138,10 @@ async function cmdList(args: string[]): Promise<void> {
     return
   }
 
-  const totalSkills = result.packages.reduce((sum, p) => sum + p.skills.length, 0)
+  const totalSkills = result.packages.reduce(
+    (sum, p) => sum + p.skills.length,
+    0,
+  )
   console.log(
     `\n${result.packages.length} intent-enabled packages, ${totalSkills} skills (${result.packageManager})\n`,
   )
