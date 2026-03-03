@@ -30,6 +30,7 @@ Identify moments where the skill was silent and you had to bridge the gap
 yourself — via code reading, search, trial-and-error, or general knowledge.
 
 For each gap, note:
+
 - What you needed to do
 - What the skill should have told you
 - How you solved it (code reading, web search, guessing)
@@ -39,6 +40,7 @@ For each gap, note:
 Identify moments where the skill prescribed an approach that produced an error.
 
 For each error, note:
+
 - What the skill said to do
 - The error or incorrect behavior that resulted
 - The fix you applied
@@ -48,6 +50,7 @@ For each error, note:
 Identify moments where the human clarified, corrected, or overrode your approach.
 
 For each intervention, note:
+
 - What you were doing when the human intervened
 - What the human said or changed
 - Whether the skill could have prevented this
@@ -71,6 +74,7 @@ already provided clear answers. Respect if they decline.
 4. "Anything you'd want done differently next time?"
 
 Derive `userRating` from overall sentiment:
+
 - Mostly positive → `good`
 - Mixed signals → `mixed`
 - Mostly negative → `bad`
@@ -100,18 +104,18 @@ Construct one JSON payload per skill used. The schema must match exactly:
 
 ### Field derivation guide
 
-| Field | Source |
-|-------|--------|
-| `skill` | Frontmatter `name` field of the SKILL.md you loaded |
-| `package` | The npm package the skill lives in (e.g. `@tanstack/query-intent`) |
-| `skillVersion` | Frontmatter `metadata.version` or `library_version` |
-| `task` | Summarize the human's original request in one sentence |
-| `whatWorked` | List skill sections/patterns that were correct and useful |
-| `whatFailed` | From 1b — skill instructions that produced errors |
-| `missing` | From 1a — gaps where the skill was silent |
-| `selfCorrections` | From 1b fixes + 1c human interventions, combined |
-| `userRating` | From Phase 2 sentiment analysis or explicit rating |
-| `userComments` | From Phase 2 answers, keep brief |
+| Field             | Source                                                             |
+| ----------------- | ------------------------------------------------------------------ |
+| `skill`           | Frontmatter `name` field of the SKILL.md you loaded                |
+| `package`         | The npm package the skill lives in (e.g. `@tanstack/query-intent`) |
+| `skillVersion`    | Frontmatter `metadata.version` or `library_version`                |
+| `task`            | Summarize the human's original request in one sentence             |
+| `whatWorked`      | List skill sections/patterns that were correct and useful          |
+| `whatFailed`      | From 1b — skill instructions that produced errors                  |
+| `missing`         | From 1a — gaps where the skill was silent                          |
+| `selfCorrections` | From 1b fixes + 1c human interventions, combined                   |
+| `userRating`      | From Phase 2 sentiment analysis or explicit rating                 |
+| `userComments`    | From Phase 2 answers, keep brief                                   |
 
 ### Example
 
@@ -142,6 +146,7 @@ but never referenced.
    If multiple skills, save as a JSON array.
 
 2. Submit:
+
    ```bash
    npx intent feedback --submit --file intent-feedback.json
    ```
