@@ -156,7 +156,10 @@ export async function scanForIntents(root?: string): Promise<ScanResult> {
 
   let topEntries: Dirent<string>[]
   try {
-    topEntries = readdirSync(nodeModulesDir, { withFileTypes: true, encoding: 'utf8' })
+    topEntries = readdirSync(nodeModulesDir, {
+      withFileTypes: true,
+      encoding: 'utf8',
+    })
   } catch {
     return { packageManager, packages, warnings }
   }
@@ -169,7 +172,10 @@ export async function scanForIntents(root?: string): Promise<ScanResult> {
       // Scoped package — check children
       let scopedEntries: Dirent<string>[]
       try {
-        scopedEntries = readdirSync(dirPath, { withFileTypes: true, encoding: 'utf8' })
+        scopedEntries = readdirSync(dirPath, {
+          withFileTypes: true,
+          encoding: 'utf8',
+        })
       } catch {
         continue
       }
