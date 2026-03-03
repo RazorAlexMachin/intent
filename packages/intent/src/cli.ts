@@ -24,6 +24,95 @@ function getMetaDir(): string {
 // Commands
 // ---------------------------------------------------------------------------
 
+function padColumn(text: string, width: number): string {
+  return text.length >= width ? text + '  ' : text.padEnd(width)
+}
+
+function printTable(headers: string[], rows: string[][]): void {
+  const widths = headers.map(
+    (h, i) => Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)) + 2,
+  )
+
+  const headerLine = headers.map((h, i) => padColumn(h, widths[i]!)).join('')
+  const separator = widths.map((w) => '─'.repeat(w)).join('')
+
+  console.log(headerLine)
+  console.log(separator)
+  for (const row of rows) {
+    console.log(row.map((cell, i) => padColumn(cell, widths[i]!)).join(''))
+  }
+}
+
+interface SkillDisplay {
+  name: string
+  description: string
+  type?: string
+}
+
+function printSkillTree(
+  skills: SkillDisplay[],
+  opts: { nameWidth: number; showTypes: boolean },
+): void {
+  const roots: string[] = []
+  const children = new Map<string, SkillDisplay[]>()
+
+  for (const skill of skills) {
+    const slashIdx = skill.name.indexOf('/')
+    if (slashIdx === -1) {
+      roots.push(skill.name)
+    } else {
+      const parent = skill.name.slice(0, slashIdx)
+      if (!children.has(parent)) children.set(parent, [])
+      children.get(parent)!.push(skill)
+    }
+  }
+
+  if (roots.length === 0) {
+    for (const skill of skills) {
+      if (!roots.includes(skill.name)) roots.push(skill.name)
+    }
+  }
+
+  for (const rootName of roots) {
+    const rootSkill = skills.find((s) => s.name === rootName)
+    if (!rootSkill) continue
+
+    printSkillLine(rootName, rootSkill, 4, opts)
+
+    for (const sub of children.get(rootName) ?? []) {
+      const childName = sub.name.slice(sub.name.indexOf('/') + 1)
+      printSkillLine(childName, sub, 6, opts)
+    }
+  }
+}
+
+function printSkillLine(
+  displayName: string,
+  skill: SkillDisplay,
+  indent: number,
+  opts: { nameWidth: number; showTypes: boolean },
+): void {
+  const nameStr = ' '.repeat(indent) + displayName
+  const padding = ' '.repeat(Math.max(2, opts.nameWidth - nameStr.length))
+  const typeCol = opts.showTypes
+    ? (skill.type ? `[${skill.type}]` : '').padEnd(14)
+    : ''
+  console.log(`${nameStr}${padding}${typeCol}${skill.description}`)
+}
+
+function computeSkillNameWidth(allPackageSkills: SkillDisplay[][]): number {
+  let max = 0
+  for (const skills of allPackageSkills) {
+    for (const s of skills) {
+      const slashIdx = s.name.indexOf('/')
+      const displayName = slashIdx === -1 ? s.name : s.name.slice(slashIdx + 1)
+      const indent = slashIdx === -1 ? 4 : 6
+      max = Math.max(max, indent + displayName.length)
+    }
+  }
+  return max + 2
+}
+
 async function cmdList(args: string[]): Promise<void> {
   const jsonOutput = args.includes('--json')
 
@@ -49,18 +138,32 @@ async function cmdList(args: string[]): Promise<void> {
     return
   }
 
-  console.log(`Intent-enabled packages (${result.packages.length} found):\n`)
+  const totalSkills = result.packages.reduce(
+    (sum, p) => sum + p.skills.length,
+    0,
+  )
+  console.log(
+    `\n${result.packages.length} intent-enabled packages, ${totalSkills} skills (${result.packageManager})\n`,
+  )
 
+  // Summary table
+  const rows = result.packages.map((pkg) => [
+    pkg.name,
+    pkg.version,
+    String(pkg.skills.length),
+    pkg.intent.requires?.join(', ') || '–',
+  ])
+  printTable(['PACKAGE', 'VERSION', 'SKILLS', 'REQUIRES'], rows)
+
+  // Skills detail
+  const allSkills = result.packages.map((p) => p.skills)
+  const nameWidth = computeSkillNameWidth(allSkills)
+  const showTypes = result.packages.some((p) => p.skills.some((s) => s.type))
+
+  console.log(`\nSkills:\n`)
   for (const pkg of result.packages) {
-    const reqStr = pkg.intent.requires?.length
-      ? `  (requires: ${pkg.intent.requires.join(', ')})`
-      : ''
-    console.log(`${pkg.name} v${pkg.version}${reqStr}`)
-
-    for (const skill of pkg.skills) {
-      const desc = skill.description ? `  ${skill.description}` : ''
-      console.log(`  ${skill.name.padEnd(32)}${desc}`)
-    }
+    console.log(`  ${pkg.name}`)
+    printSkillTree(pkg.skills, { nameWidth, showTypes })
     console.log()
   }
 
