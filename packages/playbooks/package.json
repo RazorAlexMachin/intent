@@ -18,6 +18,7 @@
     }
   },
   "bin": {
+    "playbooks": "dist/cli.mjs",
     "playbook": "dist/cli.mjs",
     "playbook-library": "dist/playbook-library.mjs"
   },
