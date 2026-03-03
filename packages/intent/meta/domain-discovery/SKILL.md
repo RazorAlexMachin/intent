@@ -70,6 +70,7 @@ For each major peer dependency (React, Vue, Svelte, Next.js, etc.):
    failure modes and cannot be discovered from the library's own source
 
 Examples of peer-dependency-driven failure modes:
+
 - SSR: calling browser-only APIs during server render
 - React: breaking hook rules in library wrapper components
 - Connection limits: opening multiple WebSocket connections per tab
