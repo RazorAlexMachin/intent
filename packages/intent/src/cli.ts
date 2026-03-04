@@ -510,8 +510,7 @@ Usage:
   intent install                  Print a skill that guides your coding agent to set up skill-to-task mappings
   intent scaffold                Print maintainer scaffold prompt
   intent setup [--workflows] [--shim] [--labels] [--all]  Copy CI templates, generate shim, create labels
-  intent stale                   Check skills for staleness
-  intent feedback --submit --file <path>           Submit skill feedback`
+  intent stale                   Check skills for staleness`
 
 const command = process.argv[2]
 const commandArgs = process.argv.slice(3)
@@ -630,11 +629,6 @@ skills:
       }
       console.log()
     }
-    break
-  }
-  case 'feedback': {
-    const { runFeedback } = await import('./feedback.js')
-    runFeedback(commandArgs)
     break
   }
   case 'setup': {
