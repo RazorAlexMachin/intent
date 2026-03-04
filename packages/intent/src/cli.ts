@@ -491,7 +491,7 @@ This produces: individual SKILL.md files.
 5. Add \`"skills"\`, \`"bin"\` to the \`"files"\` array in each package.json
 6. Add \`"!skills/_artifacts"\` to exclude artifacts from publishing
 7. Run \`npx @tanstack/intent setup --labels\` to create feedback labels on the GitHub repo
-8. Add a README note: "If you use an AI agent, run \`npx @tanstack/intent init\`"
+8. Add a README note: "If you use an AI agent, run \`npx @tanstack/intent install\`"
 `
 
   console.log(prompt)
@@ -507,12 +507,11 @@ Usage:
   intent list [--json]           Discover intent-enabled packages
   intent meta                    List meta-skills for maintainers
   intent validate [<dir>]        Validate skill files (default: skills/)
-  intent init                    Set up intent discovery in agent configs
+  intent install                  Print a skill that guides your coding agent to set up skill-to-task mappings
   intent scaffold                Print maintainer scaffold prompt
   intent setup [--workflows] [--shim] [--labels] [--all]  Copy CI templates, generate shim, create labels
   intent stale                   Check skills for staleness
-  intent feedback --submit --file <path>           Submit skill feedback
-  intent feedback --meta --submit --file <path>    Submit meta-skill feedback`
+  intent feedback --submit --file <path>           Submit skill feedback`
 
 const command = process.argv[2]
 const commandArgs = process.argv.slice(3)
@@ -527,26 +526,55 @@ switch (command) {
   case 'validate':
     cmdValidate(commandArgs)
     break
-  case 'init': {
-    const { runInit, detectAgentConfigs } = await import('./init.js')
-    const initRoot = process.cwd()
-    const result = runInit(initRoot)
+  case 'install': {
+    const prompt = `You are an AI assistant helping a developer set up skill-to-task mappings for their project.
 
-    for (const f of result.injected) console.log(`✓ Added intent block to ${f}`)
-    for (const f of result.skipped) console.log(`  Already present in ${f}`)
-    for (const f of result.created) console.log(`✓ Created ${f}`)
+Follow these steps in order:
 
-    if (result.injected.length === 0 && result.skipped.length === 0) {
-      const detected = detectAgentConfigs(initRoot)
-      if (detected.length === 0) {
-        console.log(
-          'No agent config files found (AGENTS.md, CLAUDE.md, .cursorrules, .github/copilot-instructions.md).',
-        )
-        console.log('Create one of these files and run intent init again.')
-      }
-    }
+1. CHECK FOR EXISTING MAPPINGS
+   Search the project's agent config files (CLAUDE.md, AGENTS.md, .cursorrules,
+   .github/copilot-instructions.md) for a block delimited by:
+     <!-- intent-skills:start -->
+     <!-- intent-skills:end -->
+   - If found: show the user the current mappings and ask "What would you like to update?"
+     Then skip to step 4 with their requested changes.
+   - If not found: continue to step 2.
 
-    console.log(`✓ Config: ${result.configPath}`)
+2. DISCOVER AVAILABLE SKILLS
+   Run: intent list
+   This outputs each skill's name, description, and full path — grouped by package.
+
+3. SCAN THE REPOSITORY
+   Build a picture of the project's structure and patterns:
+   - Read package.json for library dependencies
+   - Survey the directory layout (src/, app/, routes/, components/, api/, etc.)
+   - Note recurring patterns (routing, data fetching, auth, UI components, etc.)
+
+   Based on this, propose 3–5 skill-to-task mappings. For each one explain:
+   - The task or code area (in plain language the user would recognise)
+   - Which skill applies and why
+
+   Then ask: "What other tasks do you commonly use AI coding agents for?
+   I'll create mappings for those too."
+
+4. WRITE THE MAPPINGS BLOCK
+   Once you have the full set of mappings, write or update the agent config file
+   (prefer CLAUDE.md; create it if none exists) with this exact block:
+
+<!-- intent-skills:start -->
+# Skill mappings — when working in these areas, load the linked skill file into context.
+skills:
+  - task: "describe the task or code area here"
+    load: "node_modules/package-name/skills/skill-name/SKILL.md"
+<!-- intent-skills:end -->
+
+   Rules:
+   - Use the user's own words for task descriptions
+   - Include the exact path from \`intent list\` output so agents can load it directly
+   - Keep entries concise — this block is read on every agent task
+   - Preserve all content outside the block tags unchanged`
+
+    console.log(prompt)
     break
   }
   case 'scaffold': {
