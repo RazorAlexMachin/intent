@@ -55,7 +55,9 @@ async function cmdList(): Promise<void> {
   }
 
   console.log(`Feedback:`)
-  console.log(`  Submit feedback on skill usage to help maintainers improve the skills.`)
+  console.log(
+    `  Submit feedback on skill usage to help maintainers improve the skills.`,
+  )
   console.log(
     `  Load: node_modules/@tanstack/intent/meta/feedback-collection/SKILL.md`,
   )
