@@ -432,13 +432,15 @@ Run the three meta skills below **one at a time, in order**. For each step:
 
 ## Before you start
 
-Ask the maintainer:
-1. Library name, repo URL, and docs URL(s)
-2. Skills root path (default: skills/)
-3. Is this a monorepo? If yes:
+Gather this context yourself (do not ask the maintainer — agents should never
+ask for information they can discover):
+1. Read package.json for library name, repository URL, and homepage/docs URL
+2. Detect if this is a monorepo (look for workspaces field, packages/ directory, lerna.json)
+3. Use skills/ as the default skills root
+4. For monorepos:
    - Domain map artifacts go at the REPO ROOT: _artifacts/
    - Skills go INSIDE EACH PACKAGE: packages/<pkg>/skills/
-   - Ask which packages should get skills (usually client SDKs and primary framework adapters)
+   - Identify which packages are client-facing (usually client SDKs and primary framework adapters)
 
 ---
 
