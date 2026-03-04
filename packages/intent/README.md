@@ -6,12 +6,6 @@ Skills are npm packages of knowledge — encoding how tools work together, what 
 
 `@tanstack/intent` is the toolkit for generating, discovering, and maintaining skills for your library.
 
-## Install
-
-```bash
-pnpm add -D @tanstack/intent
-```
-
 ## Quick Start
 
 ### For library consumers
