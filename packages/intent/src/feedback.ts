@@ -400,28 +400,34 @@ export function runFeedback(args: string[]): void {
     const md = readFileSync(filePath, 'utf8')
 
     if (containsSecrets(md)) {
-      console.error('Feedback file appears to contain secrets or tokens — submission rejected')
+      console.error(
+        'Feedback file appears to contain secrets or tokens — submission rejected',
+      )
       process.exit(1)
     }
 
     // Extract title from first heading, or use a default
     const titleMatch = md.match(/^#\s+(.+)/m)
-    const title = titleMatch?.[1] ?? (isMeta ? 'Meta-Skill Feedback' : 'Skill Feedback')
+    const title =
+      titleMatch?.[1] ?? (isMeta ? 'Meta-Skill Feedback' : 'Skill Feedback')
     const repo = isMeta ? META_FEEDBACK_REPO : undefined
 
     if (!repo && !isMeta) {
-      console.error('Markdown feedback for standard skills requires --meta flag or JSON format with a "package" field')
+      console.error(
+        'Markdown feedback for standard skills requires --meta flag or JSON format with a "package" field',
+      )
       process.exit(1)
     }
 
     if (ghAvailable && repo) {
       try {
-        const labelArg = isMeta && titleMatch?.[1]
-          ? (() => {
-              const skillMatch = titleMatch[1].match(/:\s*(\S+)/)
-              return skillMatch ? ` --label "feedback:${skillMatch[1]}"` : ''
-            })()
-          : ''
+        const labelArg =
+          isMeta && titleMatch?.[1]
+            ? (() => {
+                const skillMatch = titleMatch[1].match(/:\s*(\S+)/)
+                return skillMatch ? ` --label "feedback:${skillMatch[1]}"` : ''
+              })()
+            : ''
         execSync(
           `gh issue create --repo ${repo} --title "${title.replace(/"/g, '\\"')}"${labelArg} --body -`,
           { input: md, stdio: ['pipe', 'pipe', 'pipe'] },

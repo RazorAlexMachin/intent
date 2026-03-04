@@ -364,7 +364,9 @@ function cmdValidate(args: string[]): void {
 
     if (Object.keys(pkgJson).length > 0) {
       // Check @tanstack/intent in devDependencies
-      const devDeps = pkgJson.devDependencies as Record<string, string> | undefined
+      const devDeps = pkgJson.devDependencies as
+        | Record<string, string>
+        | undefined
       if (!devDeps?.['@tanstack/intent']) {
         warnings.push('@tanstack/intent is not in devDependencies')
       }
@@ -379,20 +381,28 @@ function cmdValidate(args: string[]): void {
       const shimJs = join(process.cwd(), 'bin', 'intent.js')
       const shimMjs = join(process.cwd(), 'bin', 'intent.mjs')
       if (!existsSync(shimJs) && !existsSync(shimMjs)) {
-        warnings.push('No bin/intent.js or bin/intent.mjs shim found (run: npx @tanstack/intent setup --shim)')
+        warnings.push(
+          'No bin/intent.js or bin/intent.mjs shim found (run: npx @tanstack/intent setup --shim)',
+        )
       }
 
       // Check files array
       const files = pkgJson.files as string[] | undefined
       if (Array.isArray(files)) {
         if (!files.includes('skills')) {
-          warnings.push('"skills" is not in the "files" array — skills won\'t be published')
+          warnings.push(
+            '"skills" is not in the "files" array — skills won\'t be published',
+          )
         }
         if (!files.includes('bin')) {
-          warnings.push('"bin" is not in the "files" array — shim won\'t be published')
+          warnings.push(
+            '"bin" is not in the "files" array — shim won\'t be published',
+          )
         }
         if (!files.includes('!skills/_artifacts')) {
-          warnings.push('"!skills/_artifacts" is not in the "files" array — artifacts will be published unnecessarily')
+          warnings.push(
+            '"!skills/_artifacts" is not in the "files" array — artifacts will be published unnecessarily',
+          )
         }
       }
     }
@@ -419,8 +429,7 @@ function cmdValidate(args: string[]): void {
 
 function cmdScaffold(): void {
   const metaDir = getMetaDir()
-  const metaSkillPath = (name: string) =>
-    join(metaDir, name, 'SKILL.md')
+  const metaSkillPath = (name: string) => join(metaDir, name, 'SKILL.md')
 
   const prompt = `You are helping a library maintainer scaffold Intent skills.
 

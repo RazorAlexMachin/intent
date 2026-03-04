@@ -346,10 +346,12 @@ skill B." These become "See also" pointers in the generated SKILL.md
 files.
 
 For each pair, note:
+
 - Which skill references which (can be bidirectional)
 - Why awareness of the other skill improves output
 
 Examples:
+
 - A quickstart skill references the security checklist ("after setup, audit")
 - A state management skill references an SSR skill ("state hydration
   requires understanding SSR lifecycle")
@@ -646,9 +648,9 @@ not promotional.]
 
 ## Cross-References
 
-| From   | To     | Reason                                         |
-| ------ | ------ | ---------------------------------------------- |
-| [slug] | [slug] | [why awareness of one improves the other]      |
+| From   | To     | Reason                                    |
+| ------ | ------ | ----------------------------------------- |
+| [slug] | [slug] | [why awareness of one improves the other] |
 
 ## Subsystems & Reference Candidates
 
@@ -704,7 +706,7 @@ not promotional.]
 | Subsystems flagged                    | Skills with 3+ adapters/backends list them as subsystems                   |
 | Dense surfaces flagged                | Topics with >10 patterns noted as reference_candidates                     |
 | Lifecycle skills considered           | Suggest journey skills when docs have the material                         |
-| Cross-references mapped              | Skills that illuminate each other get "See also" pointers                  |
+| Cross-references mapped               | Skills that illuminate each other get "See also" pointers                  |
 
 ---
 

@@ -195,7 +195,12 @@ export function runSetup(
   const installShim = doShim || defaultAll
 
   const vars = detectVars(root)
-  const result: SetupResult = { workflows: [], skipped: [], shim: null, labels: [] }
+  const result: SetupResult = {
+    workflows: [],
+    skipped: [],
+    shim: null,
+    labels: [],
+  }
 
   const templatesDir = join(metaDir, 'templates')
 
@@ -229,7 +234,9 @@ export function runSetup(
   }
 
   if (result.labels.length > 0) {
-    console.log(`✓ Created ${result.labels.length} feedback labels on ${vars.REPO}`)
+    console.log(
+      `✓ Created ${result.labels.length} feedback labels on ${vars.REPO}`,
+    )
   }
 
   if (
