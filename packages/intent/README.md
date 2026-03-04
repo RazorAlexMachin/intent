@@ -19,13 +19,13 @@ pnpm add -D @tanstack/intent
 Set up skill-to-task mappings in your project's agent config files (CLAUDE.md, .cursorrules, etc.):
 
 ```bash
-npx intent install
+npx @tanstack/intent install
 ```
 
 List available skills from installed packages:
 
 ```bash
-npx intent list
+npx @tanstack/intent list
 ```
 
 ### For library maintainers
@@ -33,19 +33,19 @@ npx intent list
 Generate skills for your library using the guided scaffold workflow:
 
 ```bash
-npx intent scaffold
+npx @tanstack/intent scaffold
 ```
 
 Validate your skill files:
 
 ```bash
-npx intent validate
+npx @tanstack/intent validate
 ```
 
 Copy CI workflow templates into your repo:
 
 ```bash
-npx intent setup
+npx @tanstack/intent setup
 ```
 
 ## CLI Commands

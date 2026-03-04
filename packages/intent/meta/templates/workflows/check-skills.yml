@@ -41,7 +41,7 @@ jobs:
       - name: Check staleness
         id: stale
         run: |
-          OUTPUT=$(npx intent stale --json 2>&1) || true
+          OUTPUT=$(npx @tanstack/intent stale --json 2>&1) || true
           echo "$OUTPUT"
 
           # Check if any skills need review
@@ -89,7 +89,7 @@ jobs:
               '1. Read the current SKILL.md file',
               '2. Check what changed in the library since the skill was last updated',
               '3. Update the skill content to reflect current APIs and behavior',
-              '4. Run \`npx intent validate\` to verify the updated skill',
+              '4. Run \`npx @tanstack/intent validate\` to verify the updated skill',
             ].join('\n');
 
             // Write outputs
