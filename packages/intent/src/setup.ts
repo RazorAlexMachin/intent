@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import {
   existsSync,
   mkdirSync,
@@ -15,6 +16,7 @@ export interface SetupResult {
   workflows: string[]
   skipped: string[]
   shim: string | null
+  labels: string[]
 }
 
 interface TemplateVars {
@@ -149,6 +151,31 @@ function generateShim(root: string, result: SetupResult): void {
 }
 
 // ---------------------------------------------------------------------------
+// Label creation
+// ---------------------------------------------------------------------------
+
+const META_SKILL_LABELS = [
+  'feedback:domain-discovery',
+  'feedback:tree-generator',
+  'feedback:generate-skill',
+  'feedback:skill-staleness-check',
+]
+
+function createLabels(repo: string, result: SetupResult): void {
+  for (const label of META_SKILL_LABELS) {
+    try {
+      execSync(
+        `gh label create "${label}" --repo ${repo} --description "Feedback on the ${label.replace('feedback:', '')} meta skill" --color c5def5`,
+        { stdio: ['pipe', 'pipe', 'pipe'] },
+      )
+      result.labels.push(label)
+    } catch {
+      // Label likely already exists
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -160,14 +187,15 @@ export function runSetup(
   const doAll = args.includes('--all')
   const doWorkflows = doAll || args.includes('--workflows')
   const doShim = doAll || args.includes('--shim')
+  const doLabels = doAll || args.includes('--labels')
 
   // If no flags, default to --all
-  const defaultAll = !doWorkflows && !doShim
+  const defaultAll = !doWorkflows && !doShim && !doLabels
   const installWorkflows = doWorkflows || defaultAll
   const installShim = doShim || defaultAll
 
   const vars = detectVars(root)
-  const result: SetupResult = { workflows: [], skipped: [], shim: null }
+  const result: SetupResult = { workflows: [], skipped: [], shim: null, labels: [] }
 
   const templatesDir = join(metaDir, 'templates')
 
@@ -183,6 +211,11 @@ export function runSetup(
     generateShim(root, result)
   }
 
+  if (doLabels) {
+    const repo = vars.REPO
+    createLabels(repo, result)
+  }
+
   // Print results
   for (const f of result.workflows) console.log(`✓ Copied workflow: ${f}`)
   for (const f of result.skipped) console.log(`  Already exists: ${f}`)
@@ -195,9 +228,14 @@ export function runSetup(
     console.log(`\n  Add "bin" to your package.json "files" array.`)
   }
 
+  if (result.labels.length > 0) {
+    console.log(`✓ Created ${result.labels.length} feedback labels on ${vars.REPO}`)
+  }
+
   if (
     result.workflows.length === 0 &&
     result.shim === null &&
+    result.labels.length === 0 &&
     result.skipped.length === 0
   ) {
     console.log('No templates directory found. Is @tanstack/intent installed?')

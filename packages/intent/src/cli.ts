@@ -502,7 +502,7 @@ Usage:
   intent validate [<dir>]        Validate skill files (default: skills/)
   intent init                    Set up intent discovery in agent configs
   intent scaffold                Print maintainer scaffold prompt
-  intent setup [--workflows] [--all]  Copy CI templates into your repo
+  intent setup [--workflows] [--shim] [--labels] [--all]  Copy CI templates, generate shim, create labels
   intent stale                   Check skills for staleness
   intent feedback --submit --file <path>           Submit skill feedback
   intent feedback --meta --submit --file <path>    Submit meta-skill feedback`
