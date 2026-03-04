@@ -98,21 +98,27 @@ referenced.
 **Rating:** [good | mixed | bad]
 
 ## Task
+
 [one-sentence summary of what the human asked you to do]
 
 ## What Worked
+
 [patterns/instructions from the skill that were accurate and helpful]
 
 ## What Failed
+
 [from 1b — skill instructions that produced errors]
 
 ## Missing
+
 [from 1a — gaps where the skill should have covered]
 
 ## Self-Corrections
+
 [from 1b fixes + 1c human interventions, combined]
 
 ## User Comments
+
 [optional — direct quotes or paraphrased human input from Phase 2]
 ```
 
@@ -123,13 +129,13 @@ referenced.
 | Skill name       | Frontmatter `name` field of the SKILL.md you loaded                |
 | Package          | The npm package the skill lives in (e.g. `@tanstack/query-intent`) |
 | Skill version    | Frontmatter `metadata.version` or `library_version`                |
-| Task             | Summarize the human's original request in one sentence              |
-| What Worked      | List skill sections/patterns that were correct and useful           |
-| What Failed      | From 1b — skill instructions that produced errors                   |
-| Missing          | From 1a — gaps where the skill was silent                           |
-| Self-Corrections | From 1b fixes + 1c human interventions, combined                    |
-| Rating           | From Phase 2 sentiment analysis or explicit rating                  |
-| User Comments    | From Phase 2 answers, keep brief                                    |
+| Task             | Summarize the human's original request in one sentence             |
+| What Worked      | List skill sections/patterns that were correct and useful          |
+| What Failed      | From 1b — skill instructions that produced errors                  |
+| Missing          | From 1a — gaps where the skill was silent                          |
+| Self-Corrections | From 1b fixes + 1c human interventions, combined                   |
+| Rating           | From Phase 2 sentiment analysis or explicit rating                 |
+| User Comments    | From Phase 2 answers, keep brief                                   |
 
 ---
 
