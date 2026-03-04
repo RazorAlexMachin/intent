@@ -9,7 +9,7 @@ export interface SkillDisplay {
   path?: string
 }
 
-export function padColumn(text: string, width: number): string {
+function padColumn(text: string, width: number): string {
   return text.length >= width ? text + '  ' : text.padEnd(width)
 }
 
@@ -28,7 +28,7 @@ export function printTable(headers: string[], rows: string[][]): void {
   }
 }
 
-export function printSkillLine(
+function printSkillLine(
   displayName: string,
   skill: SkillDisplay,
   indent: number,
