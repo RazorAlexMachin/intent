@@ -359,4 +359,3 @@ export function submitMetaFeedback(
 
   return { method: 'stdout', detail: md }
 }
-
