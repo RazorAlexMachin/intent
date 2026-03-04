@@ -50,15 +50,15 @@ npx intent setup
 
 ## CLI Commands
 
-| Command                 | Description                                          |
-| ----------------------- | ---------------------------------------------------- |
-| `intent install`        | Set up skill-to-task mappings in agent config files  |
-| `intent list [--json]`  | Discover intent-enabled packages                     |
-| `intent meta`           | List meta-skills for library maintainers             |
-| `intent scaffold`       | Print the guided skill generation prompt             |
-| `intent validate [dir]` | Validate SKILL.md files                              |
-| `intent setup`          | Copy CI templates, generate shim, create labels      |
-| `intent stale [--json]` | Check skills for version drift                       |
+| Command                 | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| `intent install`        | Set up skill-to-task mappings in agent config files |
+| `intent list [--json]`  | Discover intent-enabled packages                    |
+| `intent meta`           | List meta-skills for library maintainers            |
+| `intent scaffold`       | Print the guided skill generation prompt            |
+| `intent validate [dir]` | Validate SKILL.md files                             |
+| `intent setup`          | Copy CI templates, generate shim, create labels     |
+| `intent stale [--json]` | Check skills for version drift                      |
 
 ## License
 
