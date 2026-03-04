@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { execFileSync, execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type {
@@ -302,8 +302,9 @@ export function submitFeedback(
   if (opts.ghAvailable) {
     try {
       const title = `Skill Feedback: ${payload.skill} (${payload.userRating})`
-      execSync(
-        `gh issue create --repo ${repo} --title "${title.replace(/"/g, '\\"')}" --body -`,
+      execFileSync(
+        'gh',
+        ['issue', 'create', '--repo', repo, '--title', title, '--body', '-'],
         { input: md, stdio: ['pipe', 'pipe', 'pipe'] },
       )
       return { method: 'gh', detail: `Submitted issue to ${repo}` }
@@ -337,8 +338,20 @@ export function submitMetaFeedback(
   if (opts.ghAvailable) {
     try {
       const title = `Meta-Skill Feedback: ${payload.metaSkill} (${payload.userRating})`
-      execSync(
-        `gh issue create --repo ${META_FEEDBACK_REPO} --title "${title.replace(/"/g, '\\"')}" --label "feedback:${payload.metaSkill}" --body -`,
+      execFileSync(
+        'gh',
+        [
+          'issue',
+          'create',
+          '--repo',
+          META_FEEDBACK_REPO,
+          '--title',
+          title,
+          '--label',
+          `feedback:${payload.metaSkill}`,
+          '--body',
+          '-',
+        ],
         { input: md, stdio: ['pipe', 'pipe', 'pipe'] },
       )
       return {

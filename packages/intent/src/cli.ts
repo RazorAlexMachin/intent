@@ -4,6 +4,11 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse as parseYaml } from 'yaml'
+import {
+  computeSkillNameWidth,
+  printSkillTree,
+  printTable,
+} from './display.js'
 import { scanForIntents } from './scanner.js'
 import type { ScanResult } from './types.js'
 import { findSkillFiles, parseFrontmatter } from './utils.js'
@@ -13,7 +18,6 @@ import { findSkillFiles, parseFrontmatter } from './utils.js'
 // ---------------------------------------------------------------------------
 
 function getMetaDir(): string {
-  // Resolve relative to this file's location in dist/
   const thisDir = dirname(fileURLToPath(import.meta.url))
   return join(thisDir, '..', 'meta')
 }
@@ -21,99 +25,6 @@ function getMetaDir(): string {
 // ---------------------------------------------------------------------------
 // Commands
 // ---------------------------------------------------------------------------
-
-function padColumn(text: string, width: number): string {
-  return text.length >= width ? text + '  ' : text.padEnd(width)
-}
-
-function printTable(headers: string[], rows: string[][]): void {
-  const widths = headers.map(
-    (h, i) => Math.max(h.length, ...rows.map((r) => (r[i] ?? '').length)) + 2,
-  )
-
-  const headerLine = headers.map((h, i) => padColumn(h, widths[i]!)).join('')
-  const separator = widths.map((w) => '─'.repeat(w)).join('')
-
-  console.log(headerLine)
-  console.log(separator)
-  for (const row of rows) {
-    console.log(row.map((cell, i) => padColumn(cell, widths[i]!)).join(''))
-  }
-}
-
-interface SkillDisplay {
-  name: string
-  description: string
-  type?: string
-  path?: string
-}
-
-function printSkillTree(
-  skills: SkillDisplay[],
-  opts: { nameWidth: number; showTypes: boolean },
-): void {
-  const roots: string[] = []
-  const children = new Map<string, SkillDisplay[]>()
-
-  for (const skill of skills) {
-    const slashIdx = skill.name.indexOf('/')
-    if (slashIdx === -1) {
-      roots.push(skill.name)
-    } else {
-      const parent = skill.name.slice(0, slashIdx)
-      if (!children.has(parent)) children.set(parent, [])
-      children.get(parent)!.push(skill)
-    }
-  }
-
-  if (roots.length === 0) {
-    for (const skill of skills) {
-      if (!roots.includes(skill.name)) roots.push(skill.name)
-    }
-  }
-
-  for (const rootName of roots) {
-    const rootSkill = skills.find((s) => s.name === rootName)
-    if (!rootSkill) continue
-
-    printSkillLine(rootName, rootSkill, 4, opts)
-
-    for (const sub of children.get(rootName) ?? []) {
-      const childName = sub.name.slice(sub.name.indexOf('/') + 1)
-      printSkillLine(childName, sub, 6, opts)
-    }
-  }
-}
-
-function printSkillLine(
-  displayName: string,
-  skill: SkillDisplay,
-  indent: number,
-  opts: { nameWidth: number; showTypes: boolean },
-): void {
-  const nameStr = ' '.repeat(indent) + displayName
-  const padding = ' '.repeat(Math.max(2, opts.nameWidth - nameStr.length))
-  const typeCol = opts.showTypes
-    ? (skill.type ? `[${skill.type}]` : '').padEnd(14)
-    : ''
-  console.log(`${nameStr}${padding}${typeCol}${skill.description}`)
-  if (skill.path) {
-    console.log(`${' '.repeat(indent + 2)}${skill.path}`)
-  }
-}
-
-function computeSkillNameWidth(allPackageSkills: SkillDisplay[][]): number {
-  let max = 0
-  for (const skills of allPackageSkills) {
-    for (const s of skills) {
-      const slashIdx = s.name.indexOf('/')
-      const displayName = slashIdx === -1 ? s.name : s.name.slice(slashIdx + 1)
-      const indent = slashIdx === -1 ? 4 : 6
-      max = Math.max(max, indent + displayName.length)
-    }
-  }
-  return max + 2
-}
 
 async function cmdList(args: string[]): Promise<void> {
   const jsonOutput = args.includes('--json')
@@ -216,6 +127,62 @@ function cmdMeta(): void {
 
   console.log(`\nUsage: load the SKILL.md into your AI agent conversation.`)
   console.log(`Path: node_modules/@tanstack/intent/meta/<name>/SKILL.md`)
+}
+
+function collectPackagingWarnings(root: string): string[] {
+  const pkgJsonPath = join(root, 'package.json')
+  if (!existsSync(pkgJsonPath)) return []
+
+  let pkgJson: Record<string, unknown>
+  try {
+    pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'))
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return [`Could not parse package.json: ${msg}`]
+  }
+
+  const warnings: string[] = []
+
+  const devDeps = pkgJson.devDependencies as
+    | Record<string, string>
+    | undefined
+  if (!devDeps?.['@tanstack/intent']) {
+    warnings.push('@tanstack/intent is not in devDependencies')
+  }
+
+  const bin = pkgJson.bin as Record<string, string> | undefined
+  if (!bin?.intent) {
+    warnings.push('Missing "bin": { "intent": ... } entry in package.json')
+  }
+
+  const shimJs = join(root, 'bin', 'intent.js')
+  const shimMjs = join(root, 'bin', 'intent.mjs')
+  if (!existsSync(shimJs) && !existsSync(shimMjs)) {
+    warnings.push(
+      'No bin/intent.js or bin/intent.mjs shim found (run: npx @tanstack/intent setup --shim)',
+    )
+  }
+
+  const files = pkgJson.files as string[] | undefined
+  if (Array.isArray(files)) {
+    if (!files.includes('skills')) {
+      warnings.push(
+        '"skills" is not in the "files" array — skills won\'t be published',
+      )
+    }
+    if (!files.includes('bin')) {
+      warnings.push(
+        '"bin" is not in the "files" array — shim won\'t be published',
+      )
+    }
+    if (!files.includes('!skills/_artifacts')) {
+      warnings.push(
+        '"!skills/_artifacts" is not in the "files" array — artifacts will be published unnecessarily',
+      )
+    }
+  }
+
+  return warnings
 }
 
 function cmdValidate(args: string[]): void {
@@ -348,61 +315,12 @@ function cmdValidate(args: string[]): void {
     }
   }
 
-  // Packaging checks — run when package.json exists at cwd
-  const pkgJsonPath = join(process.cwd(), 'package.json')
-  const warnings: string[] = []
-  if (existsSync(pkgJsonPath)) {
-    let pkgJson: Record<string, unknown> = {}
-    try {
-      pkgJson = JSON.parse(readFileSync(pkgJsonPath, 'utf8'))
-    } catch {
-      // skip packaging checks if we can't read package.json
-    }
+  const warnings = collectPackagingWarnings(process.cwd())
 
-    if (Object.keys(pkgJson).length > 0) {
-      // Check @tanstack/intent in devDependencies
-      const devDeps = pkgJson.devDependencies as
-        | Record<string, string>
-        | undefined
-      if (!devDeps?.['@tanstack/intent']) {
-        warnings.push('@tanstack/intent is not in devDependencies')
-      }
-
-      // Check bin entry
-      const bin = pkgJson.bin as Record<string, string> | undefined
-      if (!bin?.intent) {
-        warnings.push('Missing "bin": { "intent": ... } entry in package.json')
-      }
-
-      // Check shim file exists
-      const shimJs = join(process.cwd(), 'bin', 'intent.js')
-      const shimMjs = join(process.cwd(), 'bin', 'intent.mjs')
-      if (!existsSync(shimJs) && !existsSync(shimMjs)) {
-        warnings.push(
-          'No bin/intent.js or bin/intent.mjs shim found (run: npx @tanstack/intent setup --shim)',
-        )
-      }
-
-      // Check files array
-      const files = pkgJson.files as string[] | undefined
-      if (Array.isArray(files)) {
-        if (!files.includes('skills')) {
-          warnings.push(
-            '"skills" is not in the "files" array — skills won\'t be published',
-          )
-        }
-        if (!files.includes('bin')) {
-          warnings.push(
-            '"bin" is not in the "files" array — shim won\'t be published',
-          )
-        }
-        if (!files.includes('!skills/_artifacts')) {
-          warnings.push(
-            '"!skills/_artifacts" is not in the "files" array — artifacts will be published unnecessarily',
-          )
-        }
-      }
-    }
+  const printWarnings = (log: (...args: unknown[]) => void): void => {
+    if (warnings.length === 0) return
+    log(`\n⚠ Packaging warnings:`)
+    for (const w of warnings) log(`  ${w}`)
   }
 
   if (errors.length > 0) {
@@ -410,18 +328,12 @@ function cmdValidate(args: string[]): void {
     for (const { file, message } of errors) {
       console.error(`  ${file}: ${message}`)
     }
-    if (warnings.length > 0) {
-      console.error(`\n⚠ Packaging warnings:`)
-      for (const w of warnings) console.error(`  ${w}`)
-    }
+    printWarnings(console.error)
     process.exit(1)
   }
 
   console.log(`✅ Validated ${skillFiles.length} skill files — all passed`)
-  if (warnings.length > 0) {
-    console.log(`\n⚠ Packaging warnings:`)
-    for (const w of warnings) console.log(`  ${w}`)
-  }
+  printWarnings(console.log)
 }
 
 function cmdScaffold(): void {
@@ -490,7 +402,7 @@ This produces: individual SKILL.md files.
 4. Ensure each package has \`@tanstack/intent\` as a devDependency
 5. Add \`"skills"\`, \`"bin"\` to the \`"files"\` array in each package.json
 6. Add \`"!skills/_artifacts"\` to exclude artifacts from publishing
-7. Run \`npx @tanstack/intent setup --labels\` to create feedback labels on the GitHub repo
+7. Create a \`feedback:<skill-name>\` label on the GitHub repo for each skill (use \`gh label create\`)
 8. Add a README note: "If you use an AI agent, run \`npx @tanstack/intent install\`"
 `
 
@@ -509,7 +421,7 @@ Usage:
   intent validate [<dir>]        Validate skill files (default: skills/)
   intent install                  Print a skill that guides your coding agent to set up skill-to-task mappings
   intent scaffold                Print maintainer scaffold prompt
-  intent setup [--workflows] [--shim] [--labels] [--all]  Copy CI templates, generate shim, create labels
+  intent setup [--workflows] [--shim] [--all]  Copy CI templates and generate shim
   intent stale                   Check skills for staleness`
 
 const command = process.argv[2]

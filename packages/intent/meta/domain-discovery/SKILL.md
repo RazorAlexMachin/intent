@@ -428,7 +428,7 @@ Follow up on any corrections. Then:
 
 ### 4b — Gap-targeted questions (3–8 questions)
 
-For each gap flagged in Phase 3f, ask a specific question. These are not
+For each gap flagged in Phase 3g, ask a specific question. These are not
 generic — they reference what you found:
 
 **Instead of:** "What do developers get wrong?"

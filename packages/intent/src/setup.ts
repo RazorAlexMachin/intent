@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process'
 import {
   existsSync,
   mkdirSync,
@@ -7,7 +6,6 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
-import { findSkillFiles, parseFrontmatter } from './utils.js'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -17,7 +15,6 @@ export interface SetupResult {
   workflows: string[]
   skipped: string[]
   shim: string | null
-  labels: string[]
 }
 
 interface TemplateVars {
@@ -125,61 +122,39 @@ await import('@tanstack/intent/intent-library')
 `
 }
 
-function generateShim(root: string, result: SetupResult): void {
-  // Check if either extension already exists
-  const shimJs = join(root, 'bin', 'intent.js')
-  const shimMjs = join(root, 'bin', 'intent.mjs')
+function detectShimExtension(root: string): string {
+  try {
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+    if (pkg.type === 'module') return 'js'
+  } catch {
+    // default to .mjs when package.json is unreadable
+  }
+  return 'mjs'
+}
 
-  if (existsSync(shimJs) || existsSync(shimMjs)) {
-    result.skipped.push(existsSync(shimJs) ? shimJs : shimMjs)
+function findExistingShim(root: string): string | null {
+  const shimJs = join(root, 'bin', 'intent.js')
+  if (existsSync(shimJs)) return shimJs
+
+  const shimMjs = join(root, 'bin', 'intent.mjs')
+  if (existsSync(shimMjs)) return shimMjs
+
+  return null
+}
+
+function generateShim(root: string, result: SetupResult): void {
+  const existingShim = findExistingShim(root)
+
+  if (existingShim) {
+    result.skipped.push(existingShim)
     return
   }
 
-  // Use .js if package has "type": "module", otherwise .mjs
-  let ext = 'mjs'
-  const pkgPath = join(root, 'package.json')
-  try {
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-    if (pkg.type === 'module') ext = 'js'
-  } catch {
-    // default to .mjs
-  }
-
+  const ext = detectShimExtension(root)
   const shimPath = join(root, 'bin', `intent.${ext}`)
   mkdirSync(join(root, 'bin'), { recursive: true })
   writeFileSync(shimPath, getShimContent(ext))
   result.shim = shimPath
-}
-
-// ---------------------------------------------------------------------------
-// Label creation
-// ---------------------------------------------------------------------------
-
-function createSkillLabels(
-  root: string,
-  repo: string,
-  result: SetupResult,
-): void {
-  const skillsDir = join(root, 'skills')
-  if (!existsSync(skillsDir)) return
-
-  const skillFiles = findSkillFiles(skillsDir)
-  for (const filePath of skillFiles) {
-    const fm = parseFrontmatter(filePath)
-    const name = typeof fm?.name === 'string' ? fm.name : null
-    if (!name) continue
-
-    const label = `feedback:${name}`
-    try {
-      execSync(
-        `gh label create "${label}" --repo ${repo} --description "Feedback on the ${name} skill" --color c5def5`,
-        { stdio: ['pipe', 'pipe', 'pipe'] },
-      )
-      result.labels.push(label)
-    } catch {
-      // Label likely already exists
-    }
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -194,19 +169,16 @@ export function runSetup(
   const doAll = args.includes('--all')
   const doWorkflows = doAll || args.includes('--workflows')
   const doShim = doAll || args.includes('--shim')
-  const doLabels = doAll || args.includes('--labels')
 
-  // If no flags, default to --all
-  const defaultAll = !doWorkflows && !doShim && !doLabels
-  const installWorkflows = doWorkflows || defaultAll
-  const installShim = doShim || defaultAll
+  const noFlagsGiven = !doWorkflows && !doShim
+  const installWorkflows = doWorkflows || noFlagsGiven
+  const installShim = doShim || noFlagsGiven
 
   const vars = detectVars(root)
   const result: SetupResult = {
     workflows: [],
     skipped: [],
     shim: null,
-    labels: [],
   }
 
   const templatesDir = join(metaDir, 'templates')
@@ -223,10 +195,6 @@ export function runSetup(
     generateShim(root, result)
   }
 
-  if (doLabels) {
-    createSkillLabels(root, vars.REPO, result)
-  }
-
   // Print results
   for (const f of result.workflows) console.log(`✓ Copied workflow: ${f}`)
   for (const f of result.skipped) console.log(`  Already exists: ${f}`)
@@ -239,16 +207,9 @@ export function runSetup(
     console.log(`\n  Add "bin" to your package.json "files" array.`)
   }
 
-  if (result.labels.length > 0) {
-    console.log(
-      `✓ Created ${result.labels.length} feedback labels on ${vars.REPO}`,
-    )
-  }
-
   if (
     result.workflows.length === 0 &&
     result.shim === null &&
-    result.labels.length === 0 &&
     result.skipped.length === 0
   ) {
     console.log('No templates directory found. Is @tanstack/intent installed?')
