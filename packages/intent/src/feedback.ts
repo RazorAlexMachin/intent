@@ -307,8 +307,10 @@ export function submitFeedback(
         { input: md, stdio: ['pipe', 'pipe', 'pipe'] },
       )
       return { method: 'gh', detail: `Submitted issue to ${repo}` }
-    } catch {
-      // Fall through to file
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error(`GitHub submission failed: ${msg}`)
+      console.error('Falling back to file output.')
     }
   }
 
@@ -343,8 +345,10 @@ export function submitMetaFeedback(
         method: 'gh',
         detail: `Submitted issue to ${META_FEEDBACK_REPO}`,
       }
-    } catch {
-      // Fall through to file
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error(`GitHub submission failed: ${msg}`)
+      console.error('Falling back to file output.')
     }
   }
 
@@ -380,14 +384,6 @@ export function runFeedback(args: string[]): void {
     process.exit(1)
   }
 
-  let raw: unknown
-  try {
-    raw = JSON.parse(readFileSync(filePath, 'utf8'))
-  } catch {
-    console.error('Invalid JSON in feedback file')
-    process.exit(1)
-  }
-
   const ghAvailable = hasGhCli()
   const frequency = resolveFrequency(process.cwd())
 
@@ -397,6 +393,61 @@ export function runFeedback(args: string[]): void {
   }
 
   const dateSuffix = new Date().toISOString().slice(0, 10)
+  const isMarkdown = filePath.endsWith('.md')
+
+  // Markdown mode: submit the file content directly as an issue body
+  if (isMarkdown) {
+    const md = readFileSync(filePath, 'utf8')
+
+    if (containsSecrets(md)) {
+      console.error('Feedback file appears to contain secrets or tokens — submission rejected')
+      process.exit(1)
+    }
+
+    // Extract title from first heading, or use a default
+    const titleMatch = md.match(/^#\s+(.+)/m)
+    const title = titleMatch?.[1] ?? (isMeta ? 'Meta-Skill Feedback' : 'Skill Feedback')
+    const repo = isMeta ? META_FEEDBACK_REPO : undefined
+
+    if (!repo && !isMeta) {
+      console.error('Markdown feedback for standard skills requires --meta flag or JSON format with a "package" field')
+      process.exit(1)
+    }
+
+    if (ghAvailable && repo) {
+      try {
+        const labelArg = isMeta && titleMatch?.[1]
+          ? (() => {
+              const skillMatch = titleMatch[1].match(/:\s*(\S+)/)
+              return skillMatch ? ` --label "feedback:${skillMatch[1]}"` : ''
+            })()
+          : ''
+        execSync(
+          `gh issue create --repo ${repo} --title "${title.replace(/"/g, '\\"')}"${labelArg} --body -`,
+          { input: md, stdio: ['pipe', 'pipe', 'pipe'] },
+        )
+        console.log(`✓ Submitted issue to ${repo}`)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err)
+        console.error(`GitHub submission failed: ${msg}`)
+        console.log('--- Feedback markdown (copy/paste to issue) ---')
+        console.log(md)
+      }
+    } else {
+      console.log('--- Feedback markdown (copy/paste to issue) ---')
+      console.log(md)
+    }
+    return
+  }
+
+  // JSON mode
+  let raw: unknown
+  try {
+    raw = JSON.parse(readFileSync(filePath, 'utf8'))
+  } catch {
+    console.error('Invalid JSON in feedback file')
+    process.exit(1)
+  }
 
   if (isMeta) {
     const validation = validateMetaPayload(raw)
