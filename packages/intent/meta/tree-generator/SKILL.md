@@ -124,6 +124,24 @@ package directory (e.g. `packages/client/skills/core/SKILL.md`). Set the
 `package` field so generate-skill knows where to write the file. The domain
 map artifacts stay at the repo root.
 
+### Minimal library fast path
+
+If the domain map contains **fewer than 5 skills** and no framework
+adapter packages, skip the core overview + sub-skill registry pattern.
+Instead:
+
+- Use **flat structure** — each skill gets its own `skills/[skill-name]/SKILL.md`
+- **No router skill** — the intent CLI `list` command is sufficient for discovery
+- **No core overview skill** — go directly to individual skill files
+- Each skill is type `core` (not `sub-skill`) and stands alone without
+  a parent registry
+- Skip Step 2 (core overview) and Step 3 (sub-skills) — go directly to
+  writing individual skills as standalone core skills using Step 3's body
+  format
+
+This avoids unnecessary scaffolding for focused libraries where the
+overhead of a hierarchical skill tree exceeds the navigation benefit.
+
 ### Step 1 — Plan the file tree
 
 From the domain map, each entry in the `skills` list becomes a SKILL.md
@@ -229,7 +247,8 @@ table) is optional. If the intent CLI provides `list` and `show`
 commands, agents can discover skills directly without a router. Only
 create a router skill if the skill set is large enough (15+) that
 browsing the list is insufficient, or if the nested structure needs
-an entry point to guide agents to the right sub-skill.
+an entry point to guide agents to the right sub-skill. Libraries with
+fewer than 5 skills should never have a router skill.
 
 **Source repository layout for npm distribution:**
 

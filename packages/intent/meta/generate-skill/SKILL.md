@@ -356,9 +356,9 @@ updates preserve review effort and reduce diff noise.
 
 | Rule | Detail |
 |------|--------|
-| React adapter only (Phase 1) | No Vue, Solid, Svelte, Angular examples unless generating a framework skill for that adapter |
+| Match the library's framework support | Generate framework skills only for adapters the library actually provides. If the library supports only React, only generate React examples. If it supports multiple frameworks, generate one skill per adapter. |
 | All imports use real package names | `@tanstack/react-query`, not `react-query` |
-| No placeholder code | No `// ...`, `[your value]`, or `...rest` |
+| No placeholder code | No `// ...`, `[your value]`, or `...rest`. Idiomatic framework patterns like `{children}` or `{props.title}` in JSX are not placeholders — they are real code and are acceptable. |
 | Agent-first writing | Only write what the agent cannot already know |
 | Examples are minimal | No unnecessary boilerplate or wrapper components |
 | Failure modes are high-value | Focus on plausible-but-broken, not obvious errors |

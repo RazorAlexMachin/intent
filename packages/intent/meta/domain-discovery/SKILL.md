@@ -31,13 +31,33 @@ before launch"). Domains are an intermediate conceptual grouping you use
 during analysis; the final skills emerge from the intersection of domains
 and developer tasks.
 
-There are five phases. Always run them in order.
+There are five phases. Always run them in order — unless the lightweight
+path applies (see below).
 
 1. **Quick scan** — orient yourself (autonomous)
 2. **High-level interview** — extract the maintainer's task map
 3. **Deep read** — fill in failure modes and detail (autonomous)
 4. **Detail interview** — gap-targeted questions, AI-agent failures
 5. **Finalize artifacts**
+
+### Lightweight path (small libraries)
+
+After Phase 1, if the library has **fewer than 5 client-facing skill
+areas** (e.g. a focused utility library, a single-purpose tool, or a
+library with only 2–3 distinct developer tasks), use a compressed flow:
+
+1. **Phase 1** — Quick scan (same as full flow)
+2. **Phase 2+4 combined** — Single interview round. Combine the
+   high-level task map questions (Phase 2) with gap-targeted and
+   AI-agent-specific questions (Phase 4) into one interview session
+   of 4–8 questions total. Skip the draft-review step since the skill
+   set is small enough to confirm in one pass.
+3. **Phase 3** — Deep read (same as full flow, but scope is smaller)
+4. **Phase 5** — Finalize artifacts (same as full flow)
+
+The lightweight path produces identical output artifacts (domain_map.yaml
+and skill_spec.md). It just avoids two separate interview rounds when the
+library is small enough that one round covers everything.
 
 ---
 
