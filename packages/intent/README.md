@@ -30,11 +30,13 @@ npx @tanstack/intent list
 
 ### For library maintainers
 
-Generate skills for your library using the guided scaffold workflow:
+Generate skills for your library by telling your AI coding agent to run:
 
 ```bash
 npx @tanstack/intent scaffold
 ```
+
+This prints a prompt that walks the agent through domain discovery, skill tree generation, and skill creation — one step at a time with your review at each stage.
 
 Validate your skill files:
 
