@@ -1,5 +1,5 @@
 ---
-'@tanstack/playbooks': patch
+'@tanstack/intent': patch
 ---
 
 3 files changed in packages/playbooks/meta/
