@@ -1,24 +1,21 @@
-<<<<<<< HEAD:packages/intent/meta/tree-generator/SKILL.md
----
+## <<<<<<< HEAD:packages/intent/meta/tree-generator/SKILL.md
+
 name: skill-tree-generator
 description: >
-  Generate, update, and version a complete skill tree (collection of SKILL.md
-  files) for any JavaScript or TypeScript library. Produces core skills
-  (framework-agnostic) and framework skills (React, Solid, Vue bindings)
-  with dependency linking. Activate when producing skill files from a domain
-  map, updating existing skills after a library version change, or auditing
-  skill accuracy. Takes domain_map.yaml and skill_spec.md from
-  skill-domain-discovery as primary inputs.
+Generate, update, and version a complete skill tree (collection of SKILL.md
+files) for any JavaScript or TypeScript library. Produces core skills
+(framework-agnostic) and framework skills (React, Solid, Vue bindings)
+with dependency linking. Activate when producing skill files from a domain
+map, updating existing skills after a library version change, or auditing
+skill accuracy. Takes domain_map.yaml and skill_spec.md from
+skill-domain-discovery as primary inputs.
 metadata:
-  version: '3.0'
-  category: meta-tooling
-  input_artifacts:
-    - skills/_artifacts/domain_map.yaml
-    - skills/_artifacts/skill_spec.md
-  output_artifacts:
-    - skills/_artifacts/skill_tree.yaml
-  skills:
-    - skill-domain-discovery
+version: '3.0'
+category: meta-tooling
+input_artifacts: - skills/\_artifacts/domain_map.yaml - skills/\_artifacts/skill_spec.md
+output_artifacts: - skills/\_artifacts/skill_tree.yaml
+skills: - skill-domain-discovery
+
 ---
 
 # Skill Tree Generator
@@ -892,26 +889,25 @@ no draft exists, create it using this exact template.
 Do not submit feedback yet. Carry this draft forward to the generate-skill
 step.
 =======
+
 ---
+
 name: skill-tree-generator
 description: >
-  Generate, update, and version a complete skill tree (collection of SKILL.md
-  files) for any JavaScript or TypeScript library. Produces core skills
-  (framework-agnostic) and framework skills (React, Solid, Vue bindings)
-  with dependency linking. Activate when producing skill files from a domain
-  map, updating existing skills after a library version change, or auditing
-  skill accuracy. Takes domain_map.yaml and skill_spec.md from
-  skill-domain-discovery as primary inputs.
+Generate, update, and version a complete skill tree (collection of SKILL.md
+files) for any JavaScript or TypeScript library. Produces core skills
+(framework-agnostic) and framework skills (React, Solid, Vue bindings)
+with dependency linking. Activate when producing skill files from a domain
+map, updating existing skills after a library version change, or auditing
+skill accuracy. Takes domain_map.yaml and skill_spec.md from
+skill-domain-discovery as primary inputs.
 metadata:
-  version: '3.0'
-  category: meta-tooling
-  input_artifacts:
-    - skills/_artifacts/domain_map.yaml
-    - skills/_artifacts/skill_spec.md
-  output_artifacts:
-    - skills/_artifacts/skill_tree.yaml
-  skills:
-    - skill-domain-discovery
+version: '3.0'
+category: meta-tooling
+input_artifacts: - skills/\_artifacts/domain_map.yaml - skills/\_artifacts/skill_spec.md
+output_artifacts: - skills/\_artifacts/skill_tree.yaml
+skills: - skill-domain-discovery
+
 ---
 
 # Skill Tree Generator
@@ -1807,4 +1803,5 @@ no draft exists, create it using this exact template.
 
 Do not submit feedback yet. Carry this draft forward to the generate-skill
 step.
->>>>>>> 54555c4 (feat: enhance SKILL.md with clarifications on package ownership and skill generation process):packages/playbooks/meta/tree-generator/SKILL.md
+
+> > > > > > > 54555c4 (feat: enhance SKILL.md with clarifications on package ownership and skill generation process):packages/playbooks/meta/tree-generator/SKILL.md

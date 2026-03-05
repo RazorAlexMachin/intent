@@ -5,6 +5,7 @@
 3 files changed in packages/playbooks/meta/
 
 domain-discovery/SKILL.md (681 → ~792 lines)
+
 - Added "Hard rules" section: 7 mandatory rules enforcing interactive interviews, prohibiting docs-as-substitute, question collapsing, and interview skipping
 - Added 3 STOP gates between phases (1→2, 3→4, and after Phase 2d skill list confirmation)
 - Strengthened Phase 2 & 4 headers with explicit interactivity requirements and "wait for response" instructions

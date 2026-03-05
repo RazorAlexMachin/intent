@@ -1,22 +1,20 @@
-<<<<<<< HEAD:packages/intent/meta/domain-discovery/SKILL.md
----
+## <<<<<<< HEAD:packages/intent/meta/domain-discovery/SKILL.md
+
 name: skill-domain-discovery
 description: >
-  Analyze library documentation and source code, then interview maintainers
-  to discover capability domains and task-focused skills for AI coding
-  agents. Activate when creating skills for a new library, organizing
-  existing documentation into skill categories, or when a maintainer wants
-  help deciding how to structure their library's agent-facing knowledge.
-  Produces a domain_map.yaml and skill_spec.md that feed directly into
-  the skill-tree-generator skill.
+Analyze library documentation and source code, then interview maintainers
+to discover capability domains and task-focused skills for AI coding
+agents. Activate when creating skills for a new library, organizing
+existing documentation into skill categories, or when a maintainer wants
+help deciding how to structure their library's agent-facing knowledge.
+Produces a domain_map.yaml and skill_spec.md that feed directly into
+the skill-tree-generator skill.
 metadata:
-  version: '3.0'
-  category: meta-tooling
-  output_artifacts:
-    - skills/_artifacts/domain_map.yaml
-    - skills/_artifacts/skill_spec.md
-  skills:
-    - tree-generator
+version: '3.0'
+category: meta-tooling
+output_artifacts: - skills/\_artifacts/domain_map.yaml - skills/\_artifacts/skill_spec.md
+skills: - tree-generator
+
 ---
 
 # Domain Discovery & Maintainer Interview
@@ -59,6 +57,7 @@ library with only 2–3 distinct developer tasks), use a compressed flow:
 The lightweight path produces identical output artifacts (domain_map.yaml
 and skill_spec.md). It just avoids two separate interview rounds when the
 library is small enough that one round covers everything.
+
 ### Hard rules — interview phases are mandatory and interactive
 
 These rules override any other reasoning. No exceptions.
@@ -894,24 +893,24 @@ place for later steps to complete.
 Do not submit feedback yet. Tell the maintainer to carry this draft forward
 to the next meta skill step.
 =======
+
 ---
+
 name: skill-domain-discovery
 description: >
-  Analyze library documentation and source code, then interview maintainers
-  to discover capability domains and task-focused skills for AI coding
-  agents. Activate when creating skills for a new library, organizing
-  existing documentation into skill categories, or when a maintainer wants
-  help deciding how to structure their library's agent-facing knowledge.
-  Produces a domain_map.yaml and skill_spec.md that feed directly into
-  the skill-tree-generator skill.
+Analyze library documentation and source code, then interview maintainers
+to discover capability domains and task-focused skills for AI coding
+agents. Activate when creating skills for a new library, organizing
+existing documentation into skill categories, or when a maintainer wants
+help deciding how to structure their library's agent-facing knowledge.
+Produces a domain_map.yaml and skill_spec.md that feed directly into
+the skill-tree-generator skill.
 metadata:
-  version: '3.0'
-  category: meta-tooling
-  output_artifacts:
-    - skills/_artifacts/domain_map.yaml
-    - skills/_artifacts/skill_spec.md
-  skills:
-    - tree-generator
+version: '3.0'
+category: meta-tooling
+output_artifacts: - skills/\_artifacts/domain_map.yaml - skills/\_artifacts/skill_spec.md
+skills: - tree-generator
+
 ---
 
 # Domain Discovery & Maintainer Interview
@@ -1687,4 +1686,5 @@ place for later steps to complete.
 
 Do not submit feedback yet. Tell the maintainer to carry this draft forward
 to the next meta skill step.
->>>>>>> 54555c4 (feat: enhance SKILL.md with clarifications on package ownership and skill generation process):packages/playbooks/meta/domain-discovery/SKILL.md
+
+> > > > > > > 54555c4 (feat: enhance SKILL.md with clarifications on package ownership and skill generation process):packages/playbooks/meta/domain-discovery/SKILL.md
