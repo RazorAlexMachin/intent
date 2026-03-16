@@ -101,10 +101,10 @@ function discoverSkills(skillsDir: string): Array<SkillEntry> {
 // Main scanner
 // ---------------------------------------------------------------------------
 
-export async function scanLibrary(
+export function scanLibrary(
   scriptPath: string,
   _projectRoot?: string,
-): Promise<LibraryScanResult> {
+): LibraryScanResult {
   const packages: Array<LibraryPackage> = []
   const warnings: Array<string> = []
   const visited = new Set<string>()

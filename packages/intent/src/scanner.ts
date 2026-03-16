@@ -318,7 +318,7 @@ function toVersionConflict(
 // Main scanner
 // ---------------------------------------------------------------------------
 
-export async function scanForIntents(root?: string): Promise<ScanResult> {
+export function scanForIntents(root?: string): ScanResult {
   const projectRoot = root ?? process.cwd()
   const packageManager = detectPackageManager(projectRoot)
   const nodeModulesDir = join(projectRoot, 'node_modules')
