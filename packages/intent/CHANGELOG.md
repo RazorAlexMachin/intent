@@ -1,5 +1,15 @@
 # @tanstack/intent
 
+## 0.0.28
+
+### Patch Changes
+
+- Read local package.json version before falling back to npm registry in `intent stale`. This fixes version drift detection for packages not published to public registry.npmjs.org (e.g. GitHub Packages, Artifactory, private registries). ([#104](https://github.com/TanStack/intent/pull/104))
+
+- - Added Deno monorepo setup coverage so setup-github-actions writes workflows at the workspace root and preserves monorepo-aware path substitutions. ([#106](https://github.com/TanStack/intent/pull/106))
+
+- Fix intent stale so monorepo package paths resolve to the targeted workspace package instead of scanning the whole workspace. ([#102](https://github.com/TanStack/intent/pull/102))
+
 ## 0.0.26
 
 ### Patch Changes
