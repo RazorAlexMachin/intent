@@ -1,5 +1,11 @@
 # @tanstack/intent
 
+## 0.0.30
+
+### Patch Changes
+
+- Fix skill discovery so skills nested under intermediate grouping directories (directories without their own SKILL.md) are found by the scanner. ([#109](https://github.com/TanStack/intent/pull/109))
+
 ## 0.0.28
 
 ### Patch Changes
