@@ -44,6 +44,7 @@ let logSpy: ReturnType<typeof vi.spyOn>
 let infoSpy: ReturnType<typeof vi.spyOn>
 let errorSpy: ReturnType<typeof vi.spyOn>
 let tempDirs: Array<string>
+let previousGlobalNodeModules: string | undefined
 
 function getHelpOutput(): string {
   return [...infoSpy.mock.calls, ...logSpy.mock.calls]
@@ -54,6 +55,8 @@ function getHelpOutput(): string {
 beforeEach(() => {
   originalCwd = process.cwd()
   tempDirs = []
+  previousGlobalNodeModules = process.env.INTENT_GLOBAL_NODE_MODULES
+  delete process.env.INTENT_GLOBAL_NODE_MODULES
   logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
   infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
   errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -61,6 +64,11 @@ beforeEach(() => {
 
 afterEach(() => {
   process.chdir(originalCwd)
+  if (previousGlobalNodeModules === undefined) {
+    delete process.env.INTENT_GLOBAL_NODE_MODULES
+  } else {
+    process.env.INTENT_GLOBAL_NODE_MODULES = previousGlobalNodeModules
+  }
   logSpy.mockRestore()
   infoSpy.mockRestore()
   errorSpy.mockRestore()
@@ -268,7 +276,10 @@ describe('cli commands', () => {
 
   it('lists installed intent packages as json', async () => {
     const root = mkdtempSync(join(realTmpdir, 'intent-cli-list-'))
-    tempDirs.push(root)
+    const isolatedGlobalRoot = mkdtempSync(
+      join(realTmpdir, 'intent-cli-list-empty-global-'),
+    )
+    tempDirs.push(root, isolatedGlobalRoot)
     const pkgDir = join(root, 'node_modules', '@tanstack', 'db')
 
     writeJson(join(pkgDir, 'package.json'), {
@@ -281,12 +292,18 @@ describe('cli commands', () => {
       description: 'Core database concepts',
     })
 
+    process.env.INTENT_GLOBAL_NODE_MODULES = isolatedGlobalRoot
     process.chdir(root)
 
     const exitCode = await main(['list', '--json'])
     const output = logSpy.mock.calls.at(-1)?.[0]
     const parsed = JSON.parse(String(output)) as {
-      packages: Array<{ name: string; version: string; packageRoot: string }>
+      packages: Array<{
+        name: string
+        version: string
+        packageRoot: string
+        source: 'local' | 'global'
+      }>
       conflicts: Array<{ packageName: string }>
       warnings: Array<string>
     }
@@ -297,9 +314,103 @@ describe('cli commands', () => {
       name: '@tanstack/db',
       version: '0.5.2',
       packageRoot: pkgDir,
+      source: 'local',
     })
     expect(parsed.conflicts).toEqual([])
     expect(parsed.warnings).toEqual([])
+  })
+
+  it('includes configured global intent packages in list json output', async () => {
+    const root = mkdtempSync(join(realTmpdir, 'intent-cli-list-global-'))
+    const globalRoot = mkdtempSync(
+      join(realTmpdir, 'intent-cli-list-global-node-modules-'),
+    )
+    tempDirs.push(root, globalRoot)
+
+    const globalPkgDir = join(globalRoot, '@tanstack', 'query')
+    writeJson(join(globalPkgDir, 'package.json'), {
+      name: '@tanstack/query',
+      version: '5.0.0',
+      intent: { version: 1, repo: 'TanStack/query', docs: 'docs/' },
+    })
+    writeSkillMd(join(globalPkgDir, 'skills', 'fetching'), {
+      name: 'fetching',
+      description: 'Global fetching skill',
+    })
+
+    process.env.INTENT_GLOBAL_NODE_MODULES = globalRoot
+    process.chdir(root)
+
+    const exitCode = await main(['list', '--json'])
+    const output = logSpy.mock.calls.at(-1)?.[0]
+    const parsed = JSON.parse(String(output)) as {
+      packages: Array<{
+        name: string
+        version: string
+        packageRoot: string
+        source: 'local' | 'global'
+      }>
+    }
+
+    expect(exitCode).toBe(0)
+    expect(parsed.packages).toHaveLength(1)
+    expect(parsed.packages[0]).toMatchObject({
+      name: '@tanstack/query',
+      version: '5.0.0',
+      packageRoot: globalPkgDir,
+      source: 'global',
+    })
+  })
+
+  it('prefers local over global in list json output when both exist', async () => {
+    const root = mkdtempSync(join(realTmpdir, 'intent-cli-list-mixed-'))
+    const globalRoot = mkdtempSync(
+      join(realTmpdir, 'intent-cli-list-mixed-global-'),
+    )
+    tempDirs.push(root, globalRoot)
+
+    const localPkgDir = join(root, 'node_modules', '@tanstack', 'query')
+    writeJson(join(localPkgDir, 'package.json'), {
+      name: '@tanstack/query',
+      version: '5.1.0',
+      intent: { version: 1, repo: 'TanStack/query', docs: 'docs/' },
+    })
+    writeSkillMd(join(localPkgDir, 'skills', 'fetching'), {
+      name: 'fetching',
+      description: 'Local fetching skill',
+    })
+
+    const globalPkgDir = join(globalRoot, '@tanstack', 'query')
+    writeJson(join(globalPkgDir, 'package.json'), {
+      name: '@tanstack/query',
+      version: '4.0.0',
+      intent: { version: 1, repo: 'TanStack/query', docs: 'docs/' },
+    })
+    writeSkillMd(join(globalPkgDir, 'skills', 'fetching'), {
+      name: 'fetching',
+      description: 'Global fetching skill',
+    })
+
+    process.env.INTENT_GLOBAL_NODE_MODULES = globalRoot
+    process.chdir(root)
+
+    const exitCode = await main(['list', '--json'])
+    const output = logSpy.mock.calls.at(-1)?.[0]
+    const parsed = JSON.parse(String(output)) as {
+      packages: Array<{
+        name: string
+        version: string
+        source: 'local' | 'global'
+      }>
+    }
+
+    expect(exitCode).toBe(0)
+    expect(parsed.packages).toHaveLength(1)
+    expect(parsed.packages[0]).toMatchObject({
+      name: '@tanstack/query',
+      version: '5.1.0',
+      source: 'local',
+    })
   })
 
   it('explains which package version was chosen when conflicts exist', async () => {
@@ -514,6 +625,86 @@ describe('cli commands', () => {
     const exitCode = await main(['stale', '--json'])
     const output = logSpy.mock.calls.at(-1)?.[0]
     const reports = JSON.parse(String(output)) as Array<{ library: string }>
+
+    expect(exitCode).toBe(0)
+    expect(reports).toHaveLength(1)
+    expect(reports[0]!.library).toBe('@tanstack/router')
+
+    fetchSpy.mockRestore()
+  })
+
+  it('ignores configured global intent packages when checking staleness', async () => {
+    const root = mkdtempSync(join(realTmpdir, 'intent-cli-stale-global-'))
+    const globalRoot = mkdtempSync(
+      join(realTmpdir, 'intent-cli-stale-global-node-modules-'),
+    )
+    tempDirs.push(root, globalRoot)
+
+    const globalPkgDir = join(globalRoot, '@tanstack', 'query')
+    writeJson(join(globalPkgDir, 'package.json'), {
+      name: '@tanstack/query',
+      version: '5.0.0',
+      intent: { version: 1, repo: 'TanStack/query', docs: 'docs/' },
+    })
+    writeSkillMd(join(globalPkgDir, 'skills', 'fetching'), {
+      name: 'fetching',
+      description: 'Global fetching skill',
+      library_version: '5.0.0',
+    })
+
+    process.env.INTENT_GLOBAL_NODE_MODULES = globalRoot
+    process.chdir(root)
+
+    const exitCode = await main(['stale', '--json'])
+    const output = String(logSpy.mock.calls.at(-1)?.[0] ?? '')
+
+    expect(exitCode).toBe(0)
+    expect(output).toBe('[]')
+  })
+
+  it('checks only local packages for staleness when globals also exist', async () => {
+    const root = mkdtempSync(join(realTmpdir, 'intent-cli-stale-mixed-'))
+    const globalRoot = mkdtempSync(
+      join(realTmpdir, 'intent-cli-stale-mixed-global-'),
+    )
+    tempDirs.push(root, globalRoot)
+
+    writeJson(join(root, 'package.json'), {
+      private: true,
+      workspaces: ['packages/*'],
+    })
+    writeJson(join(root, 'packages', 'router', 'package.json'), {
+      name: '@tanstack/router',
+    })
+    writeSkillMd(join(root, 'packages', 'router', 'skills', 'routing'), {
+      name: 'routing',
+      description: 'Local routing skill',
+      library_version: '1.0.0',
+    })
+
+    const globalPkgDir = join(globalRoot, '@tanstack', 'query')
+    writeJson(join(globalPkgDir, 'package.json'), {
+      name: '@tanstack/query',
+      version: '5.0.0',
+      intent: { version: 1, repo: 'TanStack/query', docs: 'docs/' },
+    })
+    writeSkillMd(join(globalPkgDir, 'skills', 'fetching'), {
+      name: 'fetching',
+      description: 'Global fetching skill',
+      library_version: '5.0.0',
+    })
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: '1.0.0' }),
+    } as Response)
+
+    process.env.INTENT_GLOBAL_NODE_MODULES = globalRoot
+    process.chdir(root)
+
+    const exitCode = await main(['stale', '--json'])
+    const output = String(logSpy.mock.calls.at(-1)?.[0] ?? '')
+    const reports = JSON.parse(output) as Array<{ library: string }>
 
     expect(exitCode).toBe(0)
     expect(reports).toHaveLength(1)

@@ -23,13 +23,18 @@ function createCli(): CAC {
   cli.usage('<command> [options]')
 
   cli
-    .command('list', 'Discover intent-enabled packages')
+    .command(
+      'list',
+      'Discover intent-enabled packages from the project, workspace, and explicit global scan',
+    )
     .usage('list [--json]')
     .option('--json', 'Output JSON')
     .example('list')
     .example('list --json')
     .action(async (options: { json?: boolean }) => {
-      await runListCommand(options, scanIntentsOrFail)
+      await runListCommand(options, () =>
+        scanIntentsOrFail({ includeGlobal: true }),
+      )
     })
 
   cli
@@ -68,7 +73,10 @@ function createCli(): CAC {
     })
 
   cli
-    .command('stale [dir]', 'Check skills for staleness')
+    .command(
+      'stale [dir]',
+      'Check skills for staleness in the current package or workspace',
+    )
     .usage('stale [dir] [--json]')
     .option('--json', 'Output JSON')
     .example('stale')

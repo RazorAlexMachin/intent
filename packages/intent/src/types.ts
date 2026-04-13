@@ -24,6 +24,10 @@ export interface ScanResult {
   }
 }
 
+export interface ScanOptions {
+  includeGlobal?: boolean
+}
+
 export interface NodeModulesScanTarget {
   path: string | null
   detected: boolean
@@ -38,6 +42,7 @@ export interface IntentPackage {
   intent: IntentConfig
   skills: Array<SkillEntry>
   packageRoot: string
+  source: 'local' | 'global'
 }
 
 export interface InstalledVariant {

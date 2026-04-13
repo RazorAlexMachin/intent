@@ -1,23 +1,20 @@
 import { existsSync, readFileSync, readdirSync, type Dirent } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import {
+  createDependencyWalker,
+  createPackageRegistrar,
+} from './discovery/index.js'
+import {
   detectGlobalNodeModules,
-  getDeps,
-  listNodeModulesPackageDirs,
   parseFrontmatter,
-  resolveDepDir,
   toPosixPath,
 } from './utils.js'
-import {
-  findWorkspaceRoot,
-  readWorkspacePatterns,
-  resolveWorkspacePackages,
-} from './workspace-patterns.js'
+import { findWorkspaceRoot } from './workspace-patterns.js'
 import type {
   InstalledVariant,
   IntentConfig,
   IntentPackage,
-  NodeModulesScanTarget,
+  ScanOptions,
   ScanResult,
   SkillEntry,
   VersionConflict,
@@ -320,8 +317,12 @@ function toVersionConflict(
 // Main scanner
 // ---------------------------------------------------------------------------
 
-export function scanForIntents(root?: string): ScanResult {
+export function scanForIntents(
+  root?: string,
+  options: ScanOptions = {},
+): ScanResult {
   const projectRoot = root ?? process.cwd()
+  const { includeGlobal = false } = options
   const packageManager = detectPackageManager(projectRoot)
   const nodeModulesDir = join(projectRoot, 'node_modules')
   const explicitGlobalNodeModules =
@@ -398,210 +399,39 @@ export function scanForIntents(root?: string): ScanResult {
     }
   }
 
-  function scanTarget(target: NodeModulesScanTarget): void {
-    if (!target.path || !target.exists || target.scanned) return
-    target.scanned = true
-
-    for (const dirPath of listNodeModulesPackageDirs(target.path)) {
-      tryRegister(dirPath, 'unknown')
-    }
-  }
-
-  /**
-   * Try to register a package with a skills/ directory. Reads its
-   * package.json, validates intent config, discovers skills, and pushes
-   * to `packages`. Returns true if the package was registered.
-   */
-  function tryRegister(dirPath: string, fallbackName: string): boolean {
-    const skillsDir = join(dirPath, 'skills')
-    if (!existsSync(skillsDir)) return false
-
-    const pkgJson = readPkgJson(dirPath)
-    if (!pkgJson) {
-      warnings.push(`Could not read package.json for ${dirPath}`)
-      return false
-    }
-
-    const name = typeof pkgJson.name === 'string' ? pkgJson.name : fallbackName
-    const version =
-      typeof pkgJson.version === 'string' ? pkgJson.version : '0.0.0'
-    const intent =
-      validateIntentField(name, pkgJson.intent) ?? deriveIntentConfig(pkgJson)
-    if (!intent) {
-      warnings.push(
-        `${name} has a skills/ directory but could not determine repo/docs from package.json (add a "repository" field or explicit "intent" config)`,
-      )
-      return false
-    }
-
-    const skills = discoverSkills(skillsDir, name)
-
-    // Convert absolute skill paths to stable relative paths, preferring
-    // node_modules/<name>/... when a top-level symlink exists, otherwise
-    // falling back to a path relative to the project root.
-    const isLocal =
-      dirPath.startsWith(projectRoot + sep) ||
-      dirPath.startsWith(projectRoot + '/')
-    if (isLocal) {
-      const hasStableSymlink =
-        name !== '' && existsSync(join(projectRoot, 'node_modules', name))
-      for (const skill of skills) {
-        if (hasStableSymlink) {
-          const relFromPkg = toPosixPath(relative(dirPath, skill.path))
-          skill.path = `node_modules/${name}/${relFromPkg}`
-        } else {
-          skill.path = toPosixPath(relative(projectRoot, skill.path))
-        }
-      }
-    }
-
-    const candidate: IntentPackage = {
-      name,
-      version,
-      intent,
-      skills,
-      packageRoot: dirPath,
-    }
-    const existingIndex = packageIndexes.get(name)
-    if (existingIndex === undefined) {
-      rememberVariant(candidate)
-      packageIndexes.set(name, packages.push(candidate) - 1)
-      return true
-    }
-
-    const existing = packages[existingIndex]!
-    if (existing.packageRoot === candidate.packageRoot) {
-      return false
-    }
-
-    rememberVariant(existing)
-    rememberVariant(candidate)
-
-    const existingDepth = getPackageDepth(existing.packageRoot, projectRoot)
-    const candidateDepth = getPackageDepth(candidate.packageRoot, projectRoot)
-    const shouldReplace =
-      candidateDepth < existingDepth ||
-      (candidateDepth === existingDepth &&
-        comparePackageVersions(candidate.version, existing.version) > 0)
-
-    if (shouldReplace) {
-      packages[existingIndex] = candidate
-    }
-
-    return true
-  }
+  const { scanTarget, tryRegister } = createPackageRegistrar({
+    comparePackageVersions,
+    deriveIntentConfig,
+    discoverSkills,
+    getPackageDepth,
+    packageIndexes,
+    packages,
+    projectRoot,
+    readPkgJson,
+    rememberVariant,
+    validateIntentField,
+    warnings,
+  })
 
   // Phase 1: Check local top-level packages for skills/
   scanTarget(nodeModules.local)
 
-  // Phase 2: Walk dependency trees to discover transitive deps with skills.
-  // This handles pnpm and other non-hoisted layouts where transitive deps
-  // are not visible at the top level of node_modules.
-  const walkVisited = new Set<string>()
-
-  function walkDeps(pkgDir: string, pkgName: string): void {
-    if (walkVisited.has(pkgDir)) return
-    walkVisited.add(pkgDir)
-
-    const pkgJson = readPkgJson(pkgDir)
-    if (!pkgJson) {
-      warnings.push(
-        `Could not read package.json for ${pkgName} (skipping dependency walk)`,
-      )
-      return
-    }
-
-    for (const depName of getDeps(pkgJson)) {
-      const depDir = resolveDepDir(depName, pkgDir)
-      if (!depDir || walkVisited.has(depDir)) continue
-
-      tryRegister(depDir, depName)
-      walkDeps(depDir, depName)
-    }
-  }
-
-  function walkKnownPackages(): void {
-    for (const pkg of [...packages]) {
-      walkDeps(pkg.packageRoot, pkg.name)
-    }
-  }
-
-  function walkProjectDeps(): void {
-    let projectPkg: Record<string, unknown> | null = null
-    try {
-      projectPkg = JSON.parse(
-        readFileSync(join(projectRoot, 'package.json'), 'utf8'),
-      ) as Record<string, unknown>
-    } catch (err: unknown) {
-      const isNotFound =
-        err &&
-        typeof err === 'object' &&
-        'code' in err &&
-        (err as NodeJS.ErrnoException).code === 'ENOENT'
-      if (!isNotFound) {
-        warnings.push(
-          `Could not read project package.json: ${err instanceof Error ? err.message : String(err)}`,
-        )
-      }
-    }
-
-    if (!projectPkg) return
-    walkDepsFromPkgJson(projectPkg, projectRoot, true)
-  }
-
-  /** Resolve and walk deps listed in a package.json. */
-  function walkDepsFromPkgJson(
-    pkgJson: Record<string, unknown>,
-    fromDir: string,
-    includeDevDeps = false,
-  ): void {
-    for (const depName of getDeps(pkgJson, includeDevDeps)) {
-      const depDir = resolveDepDir(depName, fromDir)
-      if (depDir && !walkVisited.has(depDir)) {
-        tryRegister(depDir, depName)
-        walkDeps(depDir, depName)
-      }
-    }
-  }
-
-  /**
-   * In monorepos, discover workspace packages and walk their deps.
-   * Handles pnpm monorepos (workspace-specific node_modules) and ensures
-   * transitive skills packages are found through workspace package dependencies.
-   */
-  function walkWorkspacePackages(): void {
-    const workspacePatterns = readWorkspacePatterns(projectRoot)
-    if (!workspacePatterns) return
-
-    for (const wsDir of resolveWorkspacePackages(
+  const { walkKnownPackages, walkProjectDeps, walkWorkspacePackages } =
+    createDependencyWalker({
+      packages,
       projectRoot,
-      workspacePatterns,
-    )) {
-      const wsNodeModules = join(wsDir, 'node_modules')
-      if (existsSync(wsNodeModules)) {
-        for (const dirPath of listNodeModulesPackageDirs(wsNodeModules)) {
-          tryRegister(dirPath, 'unknown')
-        }
-      }
-
-      const wsPkg = readPkgJson(wsDir)
-      if (wsPkg) {
-        walkDepsFromPkgJson(wsPkg, wsDir)
-      }
-    }
-  }
+      readPkgJson,
+      tryRegister,
+      warnings,
+    })
 
   walkWorkspacePackages()
   walkKnownPackages()
   walkProjectDeps()
 
-  if (
-    explicitGlobalNodeModules ||
-    packages.length === 0 ||
-    !nodeModules.local.exists
-  ) {
+  if (includeGlobal) {
     ensureGlobalNodeModules()
-    scanTarget(nodeModules.global)
+    scanTarget(nodeModules.global, 'global')
     walkKnownPackages()
     walkProjectDeps()
   }

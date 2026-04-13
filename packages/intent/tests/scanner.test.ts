@@ -300,13 +300,14 @@ describe('scanForIntents', () => {
       description: 'Global fetching skill',
     })
 
-    const result = scanForIntents(root)
+    const result = scanForIntents(root, { includeGlobal: true })
 
     expect(result.nodeModules.global.detected).toBe(true)
     expect(result.nodeModules.global.exists).toBe(true)
     expect(result.nodeModules.global.scanned).toBe(true)
     expect(result.packages).toHaveLength(1)
     expect(result.packages[0]!.name).toBe('@tanstack/query')
+    expect(result.packages[0]!.source).toBe('global')
   })
 
   it('prefers local packages over global packages with the same name', () => {
@@ -334,11 +335,12 @@ describe('scanForIntents', () => {
       description: 'Global fetching skill',
     })
 
-    const result = scanForIntents(root)
+    const result = scanForIntents(root, { includeGlobal: true })
 
     expect(result.nodeModules.global.detected).toBe(true)
     expect(result.nodeModules.global.scanned).toBe(true)
     expect(result.packages).toHaveLength(1)
+    expect(result.packages[0]!.source).toBe('local')
     expect(result.packages[0]!.version).toBe('5.1.0')
     expect(result.packages[0]!.skills[0]!.description).toBe(
       'Local fetching skill',
@@ -350,6 +352,27 @@ describe('scanForIntents', () => {
           warning.includes('Using 5.1.0'),
       ),
     ).toBe(true)
+  })
+
+  it('ignores global packages by default even when configured', () => {
+    process.env.INTENT_GLOBAL_NODE_MODULES = globalRoot
+
+    const pkgDir = createDir(globalRoot, '@tanstack', 'query')
+    writeJson(join(pkgDir, 'package.json'), {
+      name: '@tanstack/query',
+      version: '5.0.0',
+      intent: { version: 1, repo: 'TanStack/query', docs: 'docs/' },
+    })
+    writeSkillMd(createDir(pkgDir, 'skills', 'fetching'), {
+      name: 'fetching',
+      description: 'Global fetching skill',
+    })
+
+    const result = scanForIntents(root)
+
+    expect(result.nodeModules.global.detected).toBe(true)
+    expect(result.nodeModules.global.scanned).toBe(false)
+    expect(result.packages).toEqual([])
   })
 
   it('chooses the highest version when duplicate package names exist at the same depth', () => {
